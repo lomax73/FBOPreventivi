@@ -1,0 +1,17 @@
+[Unit]
+Description=FBOPreventivi - Gunicorn
+After=network.target
+
+[Service]
+Type=simple
+User=preventivi
+Group=preventivi
+WorkingDirectory=/opt/preventivi/app
+ExecStart=/opt/preventivi/app/venv/bin/gunicorn fbopreventivi.wsgi:application \
+    --bind unix:/run/preventivi/gunicorn.sock \
+    --workers 2
+RuntimeDirectory=preventivi
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
