@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ preventivo.numero }} — FBOPreventivi{% endblock %}
+
+{% block content %}
+<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+    <div>
+        <h1>{{ preventivo.numero }} <span style="color:#94a3b8; font-weight:500;">rev. {{ preventivo.revisione }}</span></h1>
+        <p style="color:#64748b; margin:0;">{{ preventivo.cliente }} &middot; {{ preventivo.data|date:"d/m/Y" }} &middot; {{ preventivo.get_stato_display }}</p>
+    </div>
+    <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+        <a class="btn btn-secondary" href="{% url 'preventivo-update' preventivo.pk %}">Modifica</a>
+        <a class="btn btn-secondary" href="{% url 'preventivo-delete' preventivo.pk %}">Elimina</a>
+        <a class="btn btn-secondary" href="{% url 'sezione-create' preventivo.pk %}">+ Aggiungi sezione</a>
+        {% if sezioni %}
+        <a class="btn" href="{% url 'preventivo-pdf' preventivo.pk %}" target="_blank">Genera PDF</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <p style="margin:0 0 0.5rem;"><strong>{{ preventivo.oggetto_titolo }}</strong></p>
+    {% if preventivo.oggetto_righe %}
+    <ul style="margin:0;">
+        {% for riga in preventivo.oggetto_righe.splitlines %}
+        {% if riga %}<li>{{ riga }}</li>{% endif %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+
+{% for sezione in sezioni %}
+<div class="card">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+        <h2 style="margin:0;">{{ sezione.titolo }}</h2>
+        <div style="display:flex; gap:0.5rem;">
+            <a class="btn btn-secondary" href="{% url 'voce-create' sezione.pk %}">+ Aggiungi voce</a>
+            <a class="btn btn-secondary" href="{% url 'sezione-update' sezione.pk %}">Modifica sezione</a>
+            <a class="btn btn-secondary" href="{% url 'sezione-delete' sezione.pk %}">Elimina sezione</a>
+        </div>
+    </div>
+
+    {% if sezione.voci.all %}
+    <table>
+        <thead>
+            <tr><th>Descrizione</th><th>Qt.</th><th>Prezzo</th><th>Totale</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for voce in sezione.voci.all %}
+            <tr>
+                <td>
+                    <strong>{{ voce.descrizione }}</strong>
+                    {% if voce.marca %}<br><span style="color:#64748b; font-size:0.85rem;">{{ voce.marca }}</span>{% endif %}
+                    {% if voce.note %}<br><span style="color:#94a3b8; font-size:0.8rem;">{{ voce.note }}</span>{% endif %}
+                </td>
+                <td>{{ voce.quantita }} {{ voce.unita_misura }}</td>
+                <td>
+                    {% if voce.prezzo_scontato is not None %}
+                        <span style="text-decoration:line-through; color:#94a3b8;">&euro; {{ voce.prezzo_unitario|floatformat:2 }}</span>
+                        &euro; {{ voce.prezzo_scontato|floatformat:2 }}
+                    {% else %}
+                        &euro; {{ voce.prezzo_unitario|floatformat:2 }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if voce.escluso_da_totale %}
+                        <span style="color:#94a3b8;">escluso</span>
+                    {% else %}
+                        &euro; {{ voce.totale_riga|floatformat:2 }}
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'voce-update' voce.pk %}">Modifica</a> &middot;
+                    <a href="{% url 'voce-delete' voce.pk %}">Elimina</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:#94a3b8; margin:0;">Nessuna voce ancora in questa sezione.</p>
+    {% endif %}
+</div>
+{% empty %}
+<p>Nessuna sezione ancora. <a href="{% url 'sezione-create' preventivo.pk %}">Aggiungine una</a>.</p>
+{% endfor %}
+
+{% if sezioni %}
+<div class="card" style="text-align:right; font-size:1.1rem;">
+    <strong>Totale: &euro; {{ preventivo.totale|floatformat:2 }}</strong>
+</div>
+{% endif %}
+{% endblock %}

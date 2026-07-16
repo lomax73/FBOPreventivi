@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login — FBOPreventivi</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/logo.svg' %}?v=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -69,6 +70,7 @@
 </head>
 <body>
 <div class="card">
+    <img src="{% static 'img/logo.svg' %}" alt="" style="width:72px; height:72px; margin-bottom:1rem;">
     <h1>FBOPreventivi</h1>
     <form method="post">
         {% csrf_token %}

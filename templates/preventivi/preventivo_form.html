@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Preventivo — FBOPreventivi{% endblock %}
+
+{% block content %}
+<h1>{% if object %}Modifica preventivo{% else %}Nuovo preventivo{% endif %}</h1>
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn" type="submit">Salva</button>
+        {% if object %}<a class="btn btn-secondary" href="{% url 'preventivo-detail' object.pk %}">Annulla</a>
+        {% else %}<a class="btn btn-secondary" href="{% url 'quote-list' %}">Annulla</a>{% endif %}
+    </form>
+</div>
+{% endblock %}

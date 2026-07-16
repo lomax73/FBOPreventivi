@@ -1,7 +1,201 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from pathlib import Path
+
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import ProtectedError
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.template.loader import render_to_string
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone
+from django.utils.text import slugify
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from weasyprint import HTML
+
+from .forms import ClienteForm, PreventivoForm, SezionePreventivoForm, VoceProventivoForm
+from .models import Cliente, Preventivo, SezionePreventivo, VoceProventivo
 
 
-@login_required
-def quote_list(request):
-    return render(request, 'preventivi/quote_list.html')
+class ClienteListView(LoginRequiredMixin, ListView):
+    model = Cliente
+    template_name = 'preventivi/cliente_list.html'
+    context_object_name = 'clienti'
+
+
+class ClienteCreateView(LoginRequiredMixin, CreateView):
+    model = Cliente
+    form_class = ClienteForm
+    template_name = 'preventivi/cliente_form.html'
+    success_url = reverse_lazy('cliente-list')
+
+
+class ClienteUpdateView(LoginRequiredMixin, UpdateView):
+    model = Cliente
+    form_class = ClienteForm
+    template_name = 'preventivi/cliente_form.html'
+    success_url = reverse_lazy('cliente-list')
+
+
+class ClienteDeleteView(LoginRequiredMixin, DeleteView):
+    model = Cliente
+    template_name = 'preventivi/cliente_confirm_delete.html'
+    success_url = reverse_lazy('cliente-list')
+
+    def form_valid(self, form):
+        try:
+            return super().form_valid(form)
+        except ProtectedError:
+            messages.error(
+                self.request,
+                f'Impossibile eliminare "{self.object}": ha ancora preventivi associati. '
+                'Elimina prima quelli, oppure lascia il cliente.',
+            )
+            return redirect('cliente-list')
+
+
+class PreventivoListView(LoginRequiredMixin, ListView):
+    model = Preventivo
+    template_name = 'preventivi/quote_list.html'
+    context_object_name = 'preventivi'
+
+    def get_queryset(self):
+        return super().get_queryset().select_related('cliente')
+
+
+class PreventivoCreateView(LoginRequiredMixin, CreateView):
+    model = Preventivo
+    form_class = PreventivoForm
+    template_name = 'preventivi/preventivo_form.html'
+
+    def form_valid(self, form):
+        form.instance.creato_da = self.request.user
+        return super().form_valid(form)
+
+
+class PreventivoUpdateView(LoginRequiredMixin, UpdateView):
+    model = Preventivo
+    form_class = PreventivoForm
+    template_name = 'preventivi/preventivo_form.html'
+
+
+class PreventivoDeleteView(LoginRequiredMixin, DeleteView):
+    model = Preventivo
+    template_name = 'preventivi/preventivo_confirm_delete.html'
+    success_url = reverse_lazy('quote-list')
+
+
+class PreventivoDetailView(LoginRequiredMixin, DetailView):
+    model = Preventivo
+    template_name = 'preventivi/preventivo_detail.html'
+    context_object_name = 'preventivo'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sezioni'] = self.object.sezioni.prefetch_related('voci')
+        return context
+
+
+class SezionePreventivoCreateView(LoginRequiredMixin, CreateView):
+    model = SezionePreventivo
+    form_class = SezionePreventivoForm
+    template_name = 'preventivi/sezione_form.html'
+
+    def get_preventivo(self):
+        return get_object_or_404(Preventivo, pk=self.kwargs['preventivo_pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['preventivo'] = self.get_preventivo()
+        return context
+
+    def form_valid(self, form):
+        form.instance.preventivo = self.get_preventivo()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('preventivo-detail', args=[self.object.preventivo_id])
+
+
+class SezionePreventivoUpdateView(LoginRequiredMixin, UpdateView):
+    model = SezionePreventivo
+    form_class = SezionePreventivoForm
+    template_name = 'preventivi/sezione_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['preventivo'] = self.object.preventivo
+        return context
+
+    def get_success_url(self):
+        return reverse('preventivo-detail', args=[self.object.preventivo_id])
+
+
+class SezionePreventivoDeleteView(LoginRequiredMixin, DeleteView):
+    model = SezionePreventivo
+    template_name = 'preventivi/sezione_confirm_delete.html'
+
+    def get_success_url(self):
+        return reverse('preventivo-detail', args=[self.object.preventivo_id])
+
+
+class VoceProventivoCreateView(LoginRequiredMixin, CreateView):
+    model = VoceProventivo
+    form_class = VoceProventivoForm
+    template_name = 'preventivi/voce_form.html'
+
+    def get_sezione(self):
+        return get_object_or_404(SezionePreventivo, pk=self.kwargs['sezione_pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sezione'] = self.get_sezione()
+        return context
+
+    def form_valid(self, form):
+        form.instance.sezione = self.get_sezione()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('preventivo-detail', args=[self.object.sezione.preventivo_id])
+
+
+class VoceProventivoUpdateView(LoginRequiredMixin, UpdateView):
+    model = VoceProventivo
+    form_class = VoceProventivoForm
+    template_name = 'preventivi/voce_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sezione'] = self.object.sezione
+        return context
+
+    def get_success_url(self):
+        return reverse('preventivo-detail', args=[self.object.sezione.preventivo_id])
+
+
+class VoceProventivoDeleteView(LoginRequiredMixin, DeleteView):
+    model = VoceProventivo
+    template_name = 'preventivi/voce_confirm_delete.html'
+
+    def get_success_url(self):
+        return reverse('preventivo-detail', args=[self.object.sezione.preventivo_id])
+
+
+def preventivo_pdf(request, pk):
+    preventivo = get_object_or_404(
+        Preventivo.objects.select_related('cliente').prefetch_related('sezioni__voci'), pk=pk,
+    )
+    logo_path = Path(__file__).resolve().parent.parent / 'static' / 'img' / 'logo.svg'
+    logo_uri = logo_path.as_uri() if logo_path.exists() else None
+    html_string = render_to_string('preventivi/preventivo_pdf.html', {
+        'preventivo': preventivo,
+        'sezioni': preventivo.sezioni.all(),
+        'logo_uri': logo_uri,
+        'now': timezone.localtime(),
+    })
+    pdf_bytes = HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
+
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    filename = f'preventivo-{slugify(preventivo.numero)}-rev{slugify(preventivo.revisione)}.pdf'
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response

@@ -3,6 +3,31 @@
 {% block title %}Preventivi — FBOPreventivi{% endblock %}
 
 {% block content %}
-<h1>Preventivi</h1>
-<p>In costruzione: qui comparirà l'elenco dei preventivi.</p>
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+    <h1>Preventivi</h1>
+    <a class="btn" href="{% url 'preventivo-create' %}">+ Nuovo preventivo</a>
+</div>
+
+{% if preventivi %}
+<table>
+    <thead>
+        <tr><th>Numero</th><th>Rev.</th><th>Cliente</th><th>Data</th><th>Stato</th><th>Totale</th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for preventivo in preventivi %}
+        <tr>
+            <td><a href="{% url 'preventivo-detail' preventivo.pk %}">{{ preventivo.numero }}</a></td>
+            <td>{{ preventivo.revisione }}</td>
+            <td>{{ preventivo.cliente }}</td>
+            <td>{{ preventivo.data|date:"d/m/Y" }}</td>
+            <td>{{ preventivo.get_stato_display }}</td>
+            <td>&euro; {{ preventivo.totale|floatformat:2 }}</td>
+            <td><a href="{% url 'preventivo-update' preventivo.pk %}">Modifica</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Nessun preventivo ancora. <a href="{% url 'preventivo-create' %}">Creane uno</a>.</p>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Preventivo {{ preventivo.numero }}</title>
+<style>
+    @page { size: A4; margin: 2cm 1.8cm 3cm; }
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Helvetica', 'Arial', sans-serif;
+        color: #1f2937;
+        font-size: 10.5pt;
+        margin: 0;
+    }
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 2px solid #123247;
+        padding-bottom: 10pt;
+        margin-bottom: 14pt;
+    }
+    .header img { max-height: 48pt; max-width: 160pt; }
+    .header .meta { text-align: right; font-size: 9pt; color: #64748b; }
+
+    .cliente-block { margin-bottom: 14pt; }
+    .cliente-block .label { font-weight: bold; }
+    .cliente-block p { margin: 2pt 0; }
+
+    .oggetto { margin-bottom: 18pt; }
+    .oggetto h2 { font-size: 11pt; color: #123247; margin: 0 0 6pt; border-bottom: 1px solid #27a5de; padding-bottom: 3pt; }
+    .oggetto ul { margin: 0; padding-left: 16pt; }
+
+    .sezione { margin-bottom: 16pt; page-break-inside: avoid; }
+    .sezione h3 { font-size: 11pt; color: #123247; background: #eaf6fc; padding: 5pt 8pt; margin: 0 0 8pt; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 4pt; }
+    th, td { text-align: left; padding: 5pt 7pt; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    th { background: #f1f5f9; color: #64748b; text-transform: uppercase; font-size: 7.5pt; letter-spacing: 0.03em; }
+    .voce-img { max-width: 70pt; max-height: 70pt; }
+    .voce-marca { color: #64748b; font-size: 8.5pt; }
+    .voce-specifiche { margin: 3pt 0 0; padding-left: 12pt; font-size: 8.5pt; color: #475569; }
+    .voce-note { color: #94a3b8; font-size: 8pt; font-style: italic; margin-top: 3pt; }
+    .prezzo-barrato { text-decoration: line-through; color: #94a3b8; }
+    .escluso { color: #94a3b8; }
+
+    .totale { text-align: right; font-size: 12pt; margin: 16pt 0; }
+
+    .condizioni { margin-top: 20pt; }
+    .condizioni h2 { font-size: 11pt; color: #123247; margin: 0 0 6pt; border-bottom: 1px solid #27a5de; padding-bottom: 3pt; }
+    .condizioni ul { margin: 0; padding-left: 16pt; }
+
+    .firma { margin-top: 30pt; }
+    .firma .riga { margin-top: 24pt; border-top: 1px solid #1f2937; width: 220pt; }
+
+    .footer {
+        position: fixed;
+        bottom: 0.8cm;
+        left: 1.8cm;
+        right: 1.8cm;
+        font-size: 7pt;
+        color: #94a3b8;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 4pt;
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+
+<div class="footer">
+    FBO Solution Srl - Via Giuseppe Garibaldi 9 &ndash; 21049 Tradate (VA) &middot;
+    Sede Op. Via 4 Novembre 6 &ndash; 22070 Carbonate (Co) &middot;
+    Cap. soc. 13.100,00 i.v. &ndash; P.IVA 03536370129 &ndash; REA VA 359399 &middot;
+    Tel. 0331/1587345 &middot; Email info@fbosolution.it
+</div>
+
+<div class="header">
+    <div>{% if logo_uri %}<img src="{{ logo_uri }}" alt="FBO Solution">{% endif %}</div>
+    <div class="meta">
+        Data: {{ preventivo.data|date:"d/m/Y" }}<br>
+        Offerta n&deg;: {{ preventivo.numero }} Rev. {{ preventivo.revisione }}
+    </div>
+</div>
+
+<div class="cliente-block">
+    <p class="label">Spett.le</p>
+    <p>{{ preventivo.cliente.ragione_sociale }}</p>
+    {% if preventivo.cliente.indirizzo %}<p>{{ preventivo.cliente.indirizzo }}</p>{% endif %}
+    {% if preventivo.cliente.citta %}<p>{{ preventivo.cliente.citta }} {% if preventivo.cliente.provincia %}({{ preventivo.cliente.provincia }}){% endif %} {{ preventivo.cliente.cap }}</p>{% endif %}
+</div>
+
+<div class="oggetto">
+    <h2>Oggetto: {{ preventivo.oggetto_titolo }}</h2>
+    {% if preventivo.oggetto_righe %}
+    <ul>
+        {% for riga in preventivo.oggetto_righe.splitlines %}
+        {% if riga %}<li>{{ riga }}</li>{% endif %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+
+{% for sezione in sezioni %}
+{% if sezione.voci.all %}
+<div class="sezione">
+    <h3>{{ sezione.titolo }}</h3>
+    <table>
+        <thead>
+            <tr><th style="width:70pt;"></th><th>Descrizione</th><th style="width:50pt;">Qt.</th><th style="width:70pt;">Prezzo</th><th style="width:70pt;">Totale</th></tr>
+        </thead>
+        <tbody>
+            {% for voce in sezione.voci.all %}
+            <tr>
+                <td>{% if voce.immagine %}<img class="voce-img" src="{{ voce.immagine.path }}" alt="">{% endif %}</td>
+                <td>
+                    <strong>{{ voce.descrizione }}</strong>
+                    {% if voce.marca %}<br><span class="voce-marca">Marca: {{ voce.marca }}</span>{% endif %}
+                    {% if voce.specifiche %}
+                    <ul class="voce-specifiche">
+                        {% for riga in voce.specifiche.splitlines %}
+                        {% if riga %}<li>{{ riga }}</li>{% endif %}
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% if voce.note %}<p class="voce-note">{{ voce.note }}</p>{% endif %}
+                </td>
+                <td>{{ voce.quantita }} {{ voce.unita_misura }}</td>
+                <td>
+                    {% if voce.prezzo_scontato is not None %}
+                        <span class="prezzo-barrato">&euro; {{ voce.prezzo_unitario|floatformat:2 }}</span><br>
+                        &euro; {{ voce.prezzo_scontato|floatformat:2 }}
+                    {% else %}
+                        &euro; {{ voce.prezzo_unitario|floatformat:2 }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if voce.escluso_da_totale %}
+                        <span class="escluso">escluso</span>
+                    {% else %}
+                        &euro; {{ voce.totale_riga|floatformat:2 }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endfor %}
+
+<div class="totale">Totale: &euro; {{ preventivo.totale|floatformat:2 }}</div>
+
+<div class="condizioni">
+    <h2>Condizioni di fornitura</h2>
+    <ul>
+        {% for riga in preventivo.condizioni_fornitura.splitlines %}
+        {% if riga %}<li>{{ riga }}</li>{% endif %}
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="firma">
+    <p>Data : ____ / ____ / ________</p>
+    <p>Timbro e firma per conferma d'ordine:</p>
+    <div class="riga"></div>
+</div>
+
+</body>
+</html>

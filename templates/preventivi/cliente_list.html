@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Clienti — FBOPreventivi{% endblock %}
+
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+    <h1>Clienti</h1>
+    <a class="btn" href="{% url 'cliente-create' %}">+ Nuovo cliente</a>
+</div>
+
+{% if clienti %}
+<table>
+    <thead>
+        <tr><th>Ragione sociale</th><th>Città</th><th>P.IVA</th><th>Preventivi</th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for cliente in clienti %}
+        <tr>
+            <td>{{ cliente.ragione_sociale }}</td>
+            <td>{{ cliente.citta }}</td>
+            <td>{{ cliente.piva }}</td>
+            <td>{{ cliente.preventivi.count }}</td>
+            <td>
+                <a href="{% url 'cliente-update' cliente.pk %}">Modifica</a> &middot;
+                <a href="{% url 'cliente-delete' cliente.pk %}">Elimina</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Nessun cliente ancora. <a href="{% url 'cliente-create' %}">Creane uno</a>.</p>
+{% endif %}
+{% endblock %}

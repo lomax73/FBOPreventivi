@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Sezione — FBOPreventivi{% endblock %}
+
+{% block content %}
+<h1>{% if object %}Modifica sezione{% else %}Nuova sezione{% endif %}</h1>
+<p style="color:#64748b;">Preventivo {{ preventivo.numero }} rev. {{ preventivo.revisione }}</p>
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn" type="submit">Salva</button>
+        <a class="btn btn-secondary" href="{% url 'preventivo-detail' preventivo.pk %}">Annulla</a>
+    </form>
+</div>
+{% endblock %}

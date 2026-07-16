@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Elimina voce — FBOPreventivi{% endblock %}
+
+{% block content %}
+<h1>Elimina voce</h1>
+<div class="card">
+    <p>Eliminare la voce <strong>{{ object.descrizione }}</strong>? L'operazione è definitiva.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button class="btn" style="background:#ef4444;" type="submit">Elimina</button>
+        <a class="btn btn-secondary" href="{% url 'preventivo-detail' object.sezione.preventivo_id %}">Annulla</a>
+    </form>
+</div>
+{% endblock %}

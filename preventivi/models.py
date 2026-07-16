@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 
 CONDIZIONI_FORNITURA_DEFAULT = (
     "Consegna inclusa\n"
@@ -60,6 +61,9 @@ class Preventivo(models.Model):
 
     def __str__(self):
         return f"{self.numero} rev. {self.revisione} — {self.cliente}"
+
+    def get_absolute_url(self):
+        return reverse('preventivo-detail', args=[self.pk])
 
     @property
     def totale(self):
