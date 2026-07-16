@@ -1,0 +1,6 @@
+Django>=5.2,<6.0
+python-dotenv>=1.0
+gunicorn>=26.0
+requests>=2.31
+Pillow>=12.0
+weasyprint>=69.0
