@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Catalogo — FBOPreventivi{% endblock %}
+
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+    <h1>Catalogo prodotti</h1>
+    <a class="btn" href="{% url 'prodotto-create' %}">+ Nuovo prodotto</a>
+</div>
+
+{% if prodotti %}
+<table>
+    <thead>
+        <tr><th></th><th>Descrizione</th><th>Marca</th><th>Prezzo di listino</th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for prodotto in prodotti %}
+        <tr>
+            <td>{% if prodotto.immagine %}<img src="{{ prodotto.immagine.url }}" alt="" style="max-height:40px; max-width:60px;">{% endif %}</td>
+            <td>{{ prodotto.descrizione }}</td>
+            <td>{{ prodotto.marca }}</td>
+            <td>&euro; {{ prodotto.prezzo_unitario|floatformat:2 }} / {{ prodotto.unita_misura }}</td>
+            <td>
+                <a href="{% url 'prodotto-update' prodotto.pk %}">Modifica</a> &middot;
+                <a href="{% url 'prodotto-delete' prodotto.pk %}">Elimina</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Nessun prodotto ancora in catalogo. <a href="{% url 'prodotto-create' %}">Aggiungine uno</a>.</p>
+{% endif %}
+{% endblock %}

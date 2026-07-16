@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Prodotto — FBOPreventivi{% endblock %}
+
+{% block content %}
+<h1>{% if object %}Modifica prodotto{% else %}Nuovo prodotto{% endif %}</h1>
+<div class="card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn" type="submit">Salva</button>
+        <a class="btn btn-secondary" href="{% url 'prodotto-list' %}">Annulla</a>
+    </form>
+</div>
+{% endblock %}

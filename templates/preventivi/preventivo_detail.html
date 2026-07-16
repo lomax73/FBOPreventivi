@@ -33,8 +33,18 @@
 <div class="card">
     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
         <h2 style="margin:0;">{{ sezione.titolo }}</h2>
-        <div style="display:flex; gap:0.5rem;">
+        <div style="display:flex; gap:0.5rem; align-items:center;">
             <a class="btn btn-secondary" href="{% url 'voce-create' sezione.pk %}">+ Aggiungi voce</a>
+            {% if prodotti_catalogo %}
+            <form method="get" action="{% url 'voce-create' sezione.pk %}" style="margin:0;">
+                <select name="da_prodotto" onchange="this.form.submit()">
+                    <option value="">Da catalogo&hellip;</option>
+                    {% for prodotto in prodotti_catalogo %}
+                    <option value="{{ prodotto.pk }}">{{ prodotto.descrizione }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% endif %}
             <a class="btn btn-secondary" href="{% url 'sezione-update' sezione.pk %}">Modifica sezione</a>
             <a class="btn btn-secondary" href="{% url 'sezione-delete' sezione.pk %}">Elimina sezione</a>
         </div>

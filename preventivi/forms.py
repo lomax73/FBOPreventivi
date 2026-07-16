@@ -1,6 +1,16 @@
 from django import forms
 
-from .models import Cliente, Preventivo, SezionePreventivo, VoceProventivo
+from .models import Cliente, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
+
+
+class ProdottoForm(forms.ModelForm):
+    class Meta:
+        model = Prodotto
+        fields = ['descrizione', 'marca', 'specifiche', 'immagine', 'unita_misura', 'prezzo_unitario', 'note']
+        widgets = {
+            'specifiche': forms.Textarea(attrs={'rows': 3}),
+            'note': forms.Textarea(attrs={'rows': 2}),
+        }
 
 
 class ClienteForm(forms.ModelForm):

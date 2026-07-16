@@ -73,6 +73,24 @@ class Preventivo(models.Model):
         )
 
 
+class Prodotto(models.Model):
+    """Voce di catalogo riutilizzabile per prefillare le voci ricorrenti (es. antenne Ubiquiti, switch)."""
+
+    descrizione = models.CharField(max_length=255)
+    marca = models.CharField(max_length=100, blank=True)
+    specifiche = models.TextField(blank=True, help_text="Un punto elenco per riga.")
+    immagine = models.ImageField(upload_to='preventivi/catalogo/', blank=True, null=True)
+    unita_misura = models.CharField(max_length=20, blank=True, default='Cad')
+    prezzo_unitario = models.DecimalField('Prezzo di listino', max_digits=10, decimal_places=2)
+    note = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['descrizione']
+
+    def __str__(self):
+        return self.descrizione
+
+
 class SezionePreventivo(models.Model):
     preventivo = models.ForeignKey(Preventivo, on_delete=models.CASCADE, related_name='sezioni')
     titolo = models.CharField(max_length=200)
@@ -87,6 +105,10 @@ class SezionePreventivo(models.Model):
 
 class VoceProventivo(models.Model):
     sezione = models.ForeignKey(SezionePreventivo, on_delete=models.CASCADE, related_name='voci')
+    prodotto = models.ForeignKey(
+        Prodotto, on_delete=models.SET_NULL, null=True, blank=True, related_name='voci',
+        help_text="Prodotto di catalogo da cui è stata prefillata questa voce (solo riferimento, non vincolante).",
+    )
     ordine = models.PositiveIntegerField(default=0)
     descrizione = models.CharField(max_length=255)
     marca = models.CharField(max_length=100, blank=True)

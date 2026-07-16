@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Elimina prodotto — FBOPreventivi{% endblock %}
+
+{% block content %}
+<h1>Elimina prodotto</h1>
+<div class="card">
+    <p>
+        Eliminare <strong>{{ object.descrizione }}</strong> dal catalogo? Le voci dei preventivi
+        già create da questo prodotto restano invariate. L'operazione è definitiva.
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        <button class="btn" style="background:#ef4444;" type="submit">Elimina</button>
+        <a class="btn btn-secondary" href="{% url 'prodotto-list' %}">Annulla</a>
+    </form>
+</div>
+{% endblock %}

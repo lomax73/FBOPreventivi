@@ -2,6 +2,7 @@ from pathlib import Path
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.files.base import ContentFile
 from django.db.models import ProtectedError
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -12,8 +13,34 @@ from django.utils.text import slugify
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from weasyprint import HTML
 
-from .forms import ClienteForm, PreventivoForm, SezionePreventivoForm, VoceProventivoForm
-from .models import Cliente, Preventivo, SezionePreventivo, VoceProventivo
+from .forms import ClienteForm, PreventivoForm, ProdottoForm, SezionePreventivoForm, VoceProventivoForm
+from .models import Cliente, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
+
+
+class ProdottoListView(LoginRequiredMixin, ListView):
+    model = Prodotto
+    template_name = 'preventivi/prodotto_list.html'
+    context_object_name = 'prodotti'
+
+
+class ProdottoCreateView(LoginRequiredMixin, CreateView):
+    model = Prodotto
+    form_class = ProdottoForm
+    template_name = 'preventivi/prodotto_form.html'
+    success_url = reverse_lazy('prodotto-list')
+
+
+class ProdottoUpdateView(LoginRequiredMixin, UpdateView):
+    model = Prodotto
+    form_class = ProdottoForm
+    template_name = 'preventivi/prodotto_form.html'
+    success_url = reverse_lazy('prodotto-list')
+
+
+class ProdottoDeleteView(LoginRequiredMixin, DeleteView):
+    model = Prodotto
+    template_name = 'preventivi/prodotto_confirm_delete.html'
+    success_url = reverse_lazy('prodotto-list')
 
 
 class ClienteListView(LoginRequiredMixin, ListView):
@@ -92,6 +119,7 @@ class PreventivoDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['sezioni'] = self.object.sezioni.prefetch_related('voci')
+        context['prodotti_catalogo'] = Prodotto.objects.all()
         return context
 
 
@@ -146,13 +174,35 @@ class VoceProventivoCreateView(LoginRequiredMixin, CreateView):
     def get_sezione(self):
         return get_object_or_404(SezionePreventivo, pk=self.kwargs['sezione_pk'])
 
+    def get_prodotto(self):
+        prodotto_pk = self.request.POST.get('prodotto_pk') or self.request.GET.get('da_prodotto')
+        return Prodotto.objects.filter(pk=prodotto_pk).first() if prodotto_pk else None
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['sezione'] = self.get_sezione()
+        context['prodotto_pk'] = self.request.GET.get('da_prodotto', '')
         return context
+
+    def get_initial(self):
+        initial = super().get_initial()
+        prodotto = self.get_prodotto()
+        if prodotto:
+            initial.update(
+                descrizione=prodotto.descrizione, marca=prodotto.marca, specifiche=prodotto.specifiche,
+                unita_misura=prodotto.unita_misura, prezzo_unitario=prodotto.prezzo_unitario, note=prodotto.note,
+            )
+        return initial
 
     def form_valid(self, form):
         form.instance.sezione = self.get_sezione()
+        prodotto = self.get_prodotto()
+        if prodotto:
+            form.instance.prodotto = prodotto
+            if prodotto.immagine and not form.instance.immagine:
+                form.instance.immagine.save(
+                    Path(prodotto.immagine.name).name, ContentFile(prodotto.immagine.read()), save=False,
+                )
         return super().form_valid(form)
 
     def get_success_url(self):
