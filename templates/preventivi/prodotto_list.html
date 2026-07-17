@@ -20,9 +20,11 @@
             <td>{{ prodotto.descrizione }}</td>
             <td>{{ prodotto.marca }}</td>
             <td>&euro; {{ prodotto.prezzo_unitario|floatformat:2 }} / {{ prodotto.unita_misura }}</td>
-            <td>
-                <a href="{% url 'prodotto-update' prodotto.pk %}">Modifica</a> &middot;
-                <a href="{% url 'prodotto-delete' prodotto.pk %}">Elimina</a>
+            <td style="white-space:nowrap;">
+                <a href="{% url 'prodotto-update' prodotto.pk %}">Modifica</a>
+                <a href="{% url 'prodotto-delete' prodotto.pk %}" title="Elimina" aria-label="Elimina" style="vertical-align:middle; color:#ef4444; margin-left:0.5rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+                </a>
             </td>
         </tr>
         {% endfor %}
