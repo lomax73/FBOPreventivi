@@ -1,11 +1,12 @@
 from pathlib import Path
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.base import ContentFile
 from django.db.models import ProtectedError
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -229,6 +230,23 @@ class VoceProventivoDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return reverse('preventivo-detail', args=[self.object.sezione.preventivo_id])
+
+
+@login_required
+def voce_save_to_catalog(request, pk):
+    voce = get_object_or_404(VoceProventivo, pk=pk)
+    if request.method == 'POST':
+        prodotto = Prodotto.objects.create(
+            descrizione=voce.descrizione, marca=voce.marca, specifiche=voce.specifiche,
+            unita_misura=voce.unita_misura, prezzo_unitario=voce.prezzo_unitario, note=voce.note,
+        )
+        if voce.immagine:
+            prodotto.immagine.save(
+                Path(voce.immagine.name).name, ContentFile(voce.immagine.read()), save=True,
+            )
+        messages.success(request, f'"{voce.descrizione}" salvata nel catalogo prodotti.')
+        return redirect('preventivo-detail', pk=voce.sezione.preventivo_id)
+    return render(request, 'preventivi/voce_save_to_catalog_confirm.html', {'voce': voce})
 
 
 def preventivo_pdf(request, pk):

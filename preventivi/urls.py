@@ -17,6 +17,7 @@ urlpatterns = [
     path('sezioni/<int:sezione_pk>/voci/nuova/', views.VoceProventivoCreateView.as_view(), name='voce-create'),
     path('voci/<int:pk>/modifica/', views.VoceProventivoUpdateView.as_view(), name='voce-update'),
     path('voci/<int:pk>/elimina/', views.VoceProventivoDeleteView.as_view(), name='voce-delete'),
+    path('voci/<int:pk>/salva-catalogo/', views.voce_save_to_catalog, name='voce-save-to-catalog'),
 
     path('clienti/', views.ClienteListView.as_view(), name='cliente-list'),
     path('clienti/nuovo/', views.ClienteCreateView.as_view(), name='cliente-create'),

@@ -82,7 +82,8 @@
                 </td>
                 <td>
                     <a href="{% url 'voce-update' voce.pk %}">Modifica</a> &middot;
-                    <a href="{% url 'voce-delete' voce.pk %}">Elimina</a>
+                    <a href="{% url 'voce-delete' voce.pk %}">Elimina</a> &middot;
+                    <a href="{% url 'voce-save-to-catalog' voce.pk %}">Salva in catalogo</a>
                 </td>
             </tr>
             {% endfor %}

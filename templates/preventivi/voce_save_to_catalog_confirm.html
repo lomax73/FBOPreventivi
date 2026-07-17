@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Salva in catalogo — FBOPreventivi{% endblock %}
+
+{% block content %}
+<h1>Salva in catalogo</h1>
+<div class="card">
+    <p>Salvare questa voce come nuovo prodotto di catalogo, per riutilizzarla nei prossimi preventivi?</p>
+    <table style="margin:0.75rem 0 1.25rem;">
+        <tbody>
+            <tr><th style="width:160px;">Descrizione</th><td>{{ voce.descrizione }}</td></tr>
+            {% if voce.marca %}<tr><th>Marca</th><td>{{ voce.marca }}</td></tr>{% endif %}
+            {% if voce.specifiche %}<tr><th>Specifiche</th><td>{{ voce.specifiche|linebreaksbr }}</td></tr>{% endif %}
+            {% if voce.immagine %}<tr><th>Immagine</th><td><img src="{{ voce.immagine.url }}" alt="" style="max-width:80px; max-height:80px; border-radius:6px;"></td></tr>{% endif %}
+            <tr><th>Prezzo di listino</th><td>&euro; {{ voce.prezzo_unitario|floatformat:2 }} / {{ voce.unita_misura }}</td></tr>
+            {% if voce.note %}<tr><th>Note</th><td>{{ voce.note }}</td></tr>{% endif %}
+        </tbody>
+    </table>
+    <p style="color:#64748b; font-size:0.85rem;">
+        Il prodotto di catalogo sarà indipendente da questa voce: eventuali modifiche future all'uno non toccheranno l'altra.
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        <button class="btn" type="submit">Salva nel catalogo</button>
+        <a class="btn btn-secondary" href="{% url 'preventivo-detail' voce.sezione.preventivo_id %}">Annulla</a>
+    </form>
+</div>
+{% endblock %}
