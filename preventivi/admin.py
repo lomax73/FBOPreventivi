@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Cliente, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
+from .models import Preventivo, Prodotto, SezionePreventivo, VoceProventivo
 
 
 @admin.register(Prodotto)
@@ -28,17 +28,11 @@ class SezionePreventivoInline(admin.TabularInline):
 
 @admin.register(Preventivo)
 class PreventivoAdmin(admin.ModelAdmin):
-    list_display = ('numero', 'revisione', 'cliente', 'data', 'stato', 'totale_display')
+    list_display = ('numero', 'revisione', 'cliente_id', 'data', 'stato', 'totale_display')
     list_filter = ('stato',)
-    search_fields = ('numero', 'cliente__ragione_sociale')
+    search_fields = ('numero',)
     inlines = [SezionePreventivoInline]
 
     @admin.display(description='Totale')
     def totale_display(self, obj):
         return obj.totale
-
-
-@admin.register(Cliente)
-class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('ragione_sociale', 'citta', 'piva')
-    search_fields = ('ragione_sociale', 'citta')

@@ -1,6 +1,7 @@
 from django import forms
 
-from .models import Cliente, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
+from . import portal_client
+from .models import Preventivo, Prodotto, SezionePreventivo, VoceProventivo
 
 
 class ProdottoForm(forms.ModelForm):
@@ -13,25 +14,41 @@ class ProdottoForm(forms.ModelForm):
         }
 
 
-class ClienteForm(forms.ModelForm):
-    class Meta:
-        model = Cliente
-        fields = ['ragione_sociale', 'indirizzo', 'cap', 'citta', 'provincia', 'piva', 'email', 'telefono', 'note']
-
-
 class PreventivoForm(forms.ModelForm):
     data = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    cliente = forms.ChoiceField(label='Cliente')
 
     class Meta:
         model = Preventivo
         fields = [
-            'numero', 'revisione', 'cliente', 'data',
+            'numero', 'revisione', 'data',
             'oggetto_titolo', 'oggetto_righe', 'condizioni_fornitura', 'stato',
         ]
         widgets = {
             'oggetto_righe': forms.Textarea(attrs={'rows': 3}),
             'condizioni_fornitura': forms.Textarea(attrs={'rows': 4}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            clienti = portal_client.list_clienti()
+        except portal_client.PortalUnavailableError as exc:
+            self.fields['cliente'].choices = []
+            self.fields['cliente'].help_text = (
+                f'Impossibile contattare l\'anagrafica clienti nel Portale: {exc}'
+            )
+        else:
+            self.fields['cliente'].choices = [(c['id'], c['ragione_sociale']) for c in clienti]
+        if self.instance and self.instance.pk and self.instance.cliente_id:
+            self.fields['cliente'].initial = str(self.instance.cliente_id)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.cliente_id = self.cleaned_data['cliente']
+        if commit:
+            instance.save()
+        return instance
 
 
 class SezionePreventivoForm(forms.ModelForm):

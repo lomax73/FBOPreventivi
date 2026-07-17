@@ -12,24 +12,6 @@ CONDIZIONI_FORNITURA_DEFAULT = (
 )
 
 
-class Cliente(models.Model):
-    ragione_sociale = models.CharField(max_length=200)
-    indirizzo = models.CharField(max_length=255, blank=True)
-    cap = models.CharField(max_length=10, blank=True)
-    citta = models.CharField(max_length=100, blank=True)
-    provincia = models.CharField(max_length=2, blank=True)
-    piva = models.CharField(max_length=20, blank=True)
-    email = models.EmailField(blank=True)
-    telefono = models.CharField(max_length=30, blank=True)
-    note = models.TextField(blank=True)
-
-    class Meta:
-        ordering = ['ragione_sociale']
-
-    def __str__(self):
-        return self.ragione_sociale
-
-
 class Preventivo(models.Model):
     class Stato(models.TextChoices):
         BOZZA = 'bozza', 'Bozza'
@@ -39,7 +21,9 @@ class Preventivo(models.Model):
 
     numero = models.CharField(max_length=20, help_text="Es. 1045_26")
     revisione = models.CharField(max_length=20, blank=True, default='1.0')
-    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='preventivi')
+    cliente_id = models.UUIDField(
+        help_text="Riferimento al cliente nell'anagrafica condivisa del Portale (clienti/api/internal/).",
+    )
     data = models.DateField()
     oggetto_titolo = models.CharField(max_length=200, blank=True, default='Offerta')
     oggetto_righe = models.TextField(blank=True, help_text="Un punto elenco per riga.")
@@ -61,7 +45,7 @@ class Preventivo(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.numero} rev. {self.revisione} — {self.cliente}"
+        return f"{self.numero} rev. {self.revisione}"
 
     def get_absolute_url(self):
         return reverse('preventivo-detail', args=[self.pk])

@@ -1,10 +1,10 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.base import ContentFile
-from django.db.models import ProtectedError
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -14,8 +14,46 @@ from django.utils.text import slugify
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from weasyprint import HTML
 
-from .forms import ClienteForm, PreventivoForm, ProdottoForm, SezionePreventivoForm, VoceProventivoForm
-from .models import Cliente, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
+from . import portal_client
+from .forms import PreventivoForm, ProdottoForm, SezionePreventivoForm, VoceProventivoForm
+from .models import Preventivo, Prodotto, SezionePreventivo, VoceProventivo
+
+
+@dataclass
+class ClienteInfo:
+    """Dati del cliente risolti dall'anagrafica condivisa nel Portale,
+    con gli stessi nomi di campo usati nei template quando qui c'era
+    ancora un modello Cliente locale."""
+
+    id: str = ''
+    ragione_sociale: str = 'Cliente non disponibile'
+    indirizzo: str = ''
+    cap: str = ''
+    citta: str = ''
+    provincia: str = ''
+    piva: str = ''
+    email: str = ''
+    telefono: str = ''
+    note: str = ''
+
+    def __str__(self):
+        return self.ragione_sociale
+
+
+def _attach_clienti(preventivi):
+    """Risolve cliente_id -> dati cliente per una lista di preventivi con
+    UNA sola chiamata al Portale (non una per riga). Se il Portale non
+    risponde o il cliente non esiste più, ogni preventivo riceve comunque
+    un ClienteInfo di fallback invece di far fallire la pagina."""
+    preventivi = list(preventivi)
+    try:
+        by_id = {c['id']: c for c in portal_client.list_clienti()}
+    except portal_client.PortalUnavailableError:
+        by_id = {}
+    for preventivo in preventivi:
+        dati = by_id.get(str(preventivo.cliente_id))
+        preventivo.cliente = ClienteInfo(**dati) if dati else ClienteInfo()
+    return preventivi
 
 
 class ProdottoListView(LoginRequiredMixin, ListView):
@@ -44,50 +82,15 @@ class ProdottoDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('prodotto-list')
 
 
-class ClienteListView(LoginRequiredMixin, ListView):
-    model = Cliente
-    template_name = 'preventivi/cliente_list.html'
-    context_object_name = 'clienti'
-
-
-class ClienteCreateView(LoginRequiredMixin, CreateView):
-    model = Cliente
-    form_class = ClienteForm
-    template_name = 'preventivi/cliente_form.html'
-    success_url = reverse_lazy('cliente-list')
-
-
-class ClienteUpdateView(LoginRequiredMixin, UpdateView):
-    model = Cliente
-    form_class = ClienteForm
-    template_name = 'preventivi/cliente_form.html'
-    success_url = reverse_lazy('cliente-list')
-
-
-class ClienteDeleteView(LoginRequiredMixin, DeleteView):
-    model = Cliente
-    template_name = 'preventivi/cliente_confirm_delete.html'
-    success_url = reverse_lazy('cliente-list')
-
-    def form_valid(self, form):
-        try:
-            return super().form_valid(form)
-        except ProtectedError:
-            messages.error(
-                self.request,
-                f'Impossibile eliminare "{self.object}": ha ancora preventivi associati. '
-                'Elimina prima quelli, oppure lascia il cliente.',
-            )
-            return redirect('cliente-list')
-
-
 class PreventivoListView(LoginRequiredMixin, ListView):
     model = Preventivo
     template_name = 'preventivi/quote_list.html'
     context_object_name = 'preventivi'
 
-    def get_queryset(self):
-        return super().get_queryset().select_related('cliente')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['preventivi'] = _attach_clienti(context['preventivi'])
+        return context
 
 
 class PreventivoCreateView(LoginRequiredMixin, CreateView):
@@ -121,6 +124,7 @@ class PreventivoDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['sezioni'] = self.object.sezioni.prefetch_related('voci')
         context['prodotti_catalogo'] = Prodotto.objects.all()
+        _attach_clienti([self.object])
         return context
 
 
@@ -251,8 +255,9 @@ def voce_save_to_catalog(request, pk):
 
 def preventivo_pdf(request, pk):
     preventivo = get_object_or_404(
-        Preventivo.objects.select_related('cliente').prefetch_related('sezioni__voci'), pk=pk,
+        Preventivo.objects.prefetch_related('sezioni__voci'), pk=pk,
     )
+    _attach_clienti([preventivo])
     logo_path = Path(__file__).resolve().parent.parent / 'static' / 'img' / 'logo.svg'
     logo_uri = logo_path.as_uri() if logo_path.exists() else None
     html_string = render_to_string('preventivi/preventivo_pdf.html', {
