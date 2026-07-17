@@ -113,7 +113,7 @@
         <tbody>
             {% for voce in sezione.voci.all %}
             <tr>
-                <td>{% if voce.immagine %}<img class="voce-img" src="{{ voce.immagine.path }}" alt="">{% endif %}</td>
+                <td>{% if voce.immagine %}<img class="voce-img" src="{{ voce.immagine_uri }}" alt="">{% endif %}</td>
                 <td>
                     <strong>{{ voce.descrizione }}</strong>
                     {% if voce.marca %}<br><span class="voce-marca">Marca: {{ voce.marca }}</span>{% endif %}

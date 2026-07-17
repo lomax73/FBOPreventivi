@@ -53,11 +53,12 @@
     {% if sezione.voci.all %}
     <table>
         <thead>
-            <tr><th>Descrizione</th><th>Qt.</th><th>Prezzo</th><th>Totale</th><th></th></tr>
+            <tr><th></th><th>Descrizione</th><th>Qt.</th><th>Prezzo</th><th>Totale</th><th></th></tr>
         </thead>
         <tbody>
             {% for voce in sezione.voci.all %}
             <tr>
+                <td>{% if voce.immagine %}<img src="{{ voce.immagine.url }}" alt="" style="max-width:50px; max-height:50px; border-radius:6px;">{% endif %}</td>
                 <td>
                     <strong>{{ voce.descrizione }}</strong>
                     {% if voce.marca %}<br><span style="color:#64748b; font-size:0.85rem;">{{ voce.marca }}</span>{% endif %}

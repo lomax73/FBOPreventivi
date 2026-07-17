@@ -1,4 +1,5 @@
 from decimal import Decimal
+from pathlib import Path
 
 from django.conf import settings
 from django.db import models
@@ -136,6 +137,14 @@ class VoceProventivo(models.Model):
 
     def __str__(self):
         return self.descrizione
+
+    @property
+    def immagine_uri(self):
+        """URI file:// per l'uso nel PDF (WeasyPrint), non l'URL pubblico
+        servito da Django."""
+        if not self.immagine:
+            return None
+        return Path(self.immagine.path).as_uri()
 
     @property
     def prezzo_effettivo(self):
