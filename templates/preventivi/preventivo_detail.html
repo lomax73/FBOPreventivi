@@ -83,7 +83,9 @@
                 <td>
                     <a href="{% url 'voce-update' voce.pk %}">Modifica</a> &middot;
                     <a href="{% url 'voce-delete' voce.pk %}">Elimina</a> &middot;
-                    <a href="{% url 'voce-save-to-catalog' voce.pk %}">Salva in catalogo</a>
+                    <a href="{% url 'voce-save-to-catalog' voce.pk %}" title="Salva in catalogo" aria-label="Salva in catalogo" style="vertical-align:middle;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                    </a>
                 </td>
             </tr>
             {% endfor %}
