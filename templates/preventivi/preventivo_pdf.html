@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Preventivo {{ preventivo.numero }}</title>
 <style>
-    @page { size: A4; margin: 2cm 1.8cm 3cm; }
+    @page { size: A4; margin: 2cm 1.8cm 4cm; }
     * { box-sizing: border-box; }
     body {
         font-family: 'Helvetica', 'Arial', sans-serif;
@@ -44,8 +44,8 @@
     .prezzo-barrato { text-decoration: line-through; color: #94a3b8; }
     .escluso { color: #94a3b8; }
 
-    .totale { text-align: right; font-size: 12pt; margin: 16pt 0; }
-    .totale-sezione { text-align: right; font-size: 9pt; color: #64748b; margin: 4pt 0 0; }
+    .totale { text-align: right; font-size: 12pt; margin: 16pt 0; page-break-inside: avoid; }
+    .totale-sezione { text-align: right; font-size: 9pt; color: #64748b; margin: 4pt 0 0; page-break-inside: avoid; }
 
     .condizioni { margin-top: 20pt; }
     .condizioni h2 { font-size: 11pt; color: #123247; margin: 0 0 6pt; border-bottom: 1px solid #27a5de; padding-bottom: 3pt; }
