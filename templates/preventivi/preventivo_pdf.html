@@ -4,7 +4,11 @@
 <meta charset="UTF-8">
 <title>Preventivo {{ preventivo.numero }}</title>
 <style>
-    @page { size: A4; margin: 2cm 1.8cm 4cm; }
+    @page {
+        size: A4;
+        margin: 2cm 1.8cm 2.4cm;
+        @bottom-center { content: element(footer); }
+    }
     * { box-sizing: border-box; }
     body {
         font-family: 'Helvetica', 'Arial', sans-serif;
@@ -55,10 +59,8 @@
     .firma .riga { margin-top: 24pt; border-top: 1px solid #1f2937; width: 220pt; }
 
     .footer {
-        position: fixed;
-        bottom: 0.8cm;
-        left: 1.8cm;
-        right: 1.8cm;
+        position: running(footer);
+        width: 100%;
         font-size: 7pt;
         color: #94a3b8;
         border-top: 1px solid #e2e8f0;
