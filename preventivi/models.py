@@ -68,7 +68,7 @@ class Preventivo(models.Model):
     @property
     def totale(self):
         return sum(
-            (voce.totale_riga for sezione in self.sezioni.all() for voce in sezione.voci.all()),
+            (sezione.totale for sezione in self.sezioni.all()),
             Decimal('0'),
         )
 
@@ -101,6 +101,10 @@ class SezionePreventivo(models.Model):
 
     def __str__(self):
         return self.titolo
+
+    @property
+    def totale(self):
+        return sum((voce.totale_riga for voce in self.voci.all()), Decimal('0'))
 
 
 class VoceProventivo(models.Model):

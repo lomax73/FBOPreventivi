@@ -45,6 +45,7 @@
     .escluso { color: #94a3b8; }
 
     .totale { text-align: right; font-size: 12pt; margin: 16pt 0; }
+    .totale-sezione { text-align: right; font-size: 9pt; color: #64748b; margin: 4pt 0 0; }
 
     .condizioni { margin-top: 20pt; }
     .condizioni h2 { font-size: 11pt; color: #123247; margin: 0 0 6pt; border-bottom: 1px solid #27a5de; padding-bottom: 3pt; }
@@ -145,6 +146,7 @@
             {% endfor %}
         </tbody>
     </table>
+    <p class="totale-sezione">Totale sezione: &euro; {{ sezione.totale|floatformat:2 }}</p>
 </div>
 {% endif %}
 {% endfor %}
