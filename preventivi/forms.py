@@ -1,17 +1,23 @@
 from django import forms
 
 from . import portal_client
-from .models import Preventivo, Prodotto, SezionePreventivo, VoceProventivo
+from .models import CategoriaProdotto, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
 
 
 class ProdottoForm(forms.ModelForm):
     class Meta:
         model = Prodotto
-        fields = ['descrizione', 'marca', 'specifiche', 'immagine', 'unita_misura', 'prezzo_unitario', 'note']
+        fields = ['categoria', 'descrizione', 'marca', 'specifiche', 'immagine', 'unita_misura', 'prezzo_unitario', 'note']
         widgets = {
             'specifiche': forms.Textarea(attrs={'rows': 3}),
             'note': forms.Textarea(attrs={'rows': 2}),
         }
+
+
+class CategoriaProdottoForm(forms.ModelForm):
+    class Meta:
+        model = CategoriaProdotto
+        fields = ['nome', 'ordine']
 
 
 class PreventivoForm(forms.ModelForm):

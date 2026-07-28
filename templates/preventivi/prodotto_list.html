@@ -11,13 +11,14 @@
 {% if prodotti %}
 <table>
     <thead>
-        <tr><th></th><th>Descrizione</th><th>Marca</th><th>Prezzo di listino</th><th></th></tr>
+        <tr><th></th><th>Descrizione</th><th>Categoria</th><th>Marca</th><th>Prezzo di listino</th><th></th></tr>
     </thead>
     <tbody>
         {% for prodotto in prodotti %}
         <tr>
             <td>{% if prodotto.immagine %}<img src="{{ prodotto.immagine.url }}" alt="" style="max-height:40px; max-width:60px;">{% endif %}</td>
             <td>{{ prodotto.descrizione }}</td>
+            <td>{{ prodotto.categoria|default:"—" }}</td>
             <td>{{ prodotto.marca }}</td>
             <td>&euro; {{ prodotto.prezzo_unitario|floatformat:2 }} / {{ prodotto.unita_misura }}</td>
             <td style="white-space:nowrap;">

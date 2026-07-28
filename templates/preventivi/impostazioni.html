@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Impostazioni — FBOPreventivi{% endblock %}
+
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem;">
+    <h1>Impostazioni</h1>
+</div>
+
+<h2>Categorie prodotto</h2>
+<p style="color:#64748b; margin-top:-0.5rem;">Usate per organizzare il catalogo prodotti.</p>
+
+<div class="card">
+    <a class="btn" href="{% url 'categoria-create' %}">+ Nuova categoria</a>
+</div>
+
+{% if categorie %}
+<table>
+    <thead>
+        <tr><th>Nome</th><th>Ordine</th><th></th></tr>
+    </thead>
+    <tbody>
+        {% for categoria in categorie %}
+        <tr>
+            <td>{{ categoria.nome }}</td>
+            <td>{{ categoria.ordine }}</td>
+            <td style="white-space:nowrap;">
+                <a href="{% url 'categoria-update' categoria.pk %}">Modifica</a>
+                <a href="{% url 'categoria-delete' categoria.pk %}" title="Elimina" aria-label="Elimina" style="vertical-align:middle; color:#ef4444; margin-left:0.5rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Nessuna categoria ancora. <a href="{% url 'categoria-create' %}">Creane una</a>.</p>
+{% endif %}
+{% endblock %}

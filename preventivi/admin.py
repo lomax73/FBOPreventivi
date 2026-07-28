@@ -1,11 +1,17 @@
 from django.contrib import admin
 
-from .models import Preventivo, Prodotto, SezionePreventivo, VoceProventivo
+from .models import CategoriaProdotto, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
+
+
+@admin.register(CategoriaProdotto)
+class CategoriaProdottoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'ordine')
 
 
 @admin.register(Prodotto)
 class ProdottoAdmin(admin.ModelAdmin):
-    list_display = ('descrizione', 'marca', 'prezzo_unitario')
+    list_display = ('descrizione', 'categoria', 'marca', 'prezzo_unitario')
+    list_filter = ('categoria',)
     search_fields = ('descrizione', 'marca')
 
 

@@ -16,8 +16,8 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 from weasyprint import HTML
 
 from . import portal_client
-from .forms import PreventivoForm, ProdottoForm, SezionePreventivoForm, VoceProventivoForm
-from .models import Preventivo, Prodotto, SezionePreventivo, VoceProventivo
+from .forms import CategoriaProdottoForm, PreventivoForm, ProdottoForm, SezionePreventivoForm, VoceProventivoForm
+from .models import CategoriaProdotto, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
 
 
 @dataclass
@@ -61,6 +61,7 @@ class ProdottoListView(LoginRequiredMixin, ListView):
     model = Prodotto
     template_name = 'preventivi/prodotto_list.html'
     context_object_name = 'prodotti'
+    queryset = Prodotto.objects.select_related('categoria')
 
 
 class ProdottoCreateView(LoginRequiredMixin, CreateView):
@@ -90,6 +91,7 @@ def prodotto_duplica(request, pk):
         return redirect('prodotto-list')
 
     copia = Prodotto(
+        categoria=originale.categoria,
         descrizione=f'{originale.descrizione}_Copia',
         marca=originale.marca,
         specifiche=originale.specifiche,
@@ -105,6 +107,32 @@ def prodotto_duplica(request, pk):
 
     messages.success(request, f'"{originale.descrizione}" duplicato nel catalogo.')
     return redirect('prodotto-list')
+
+
+class ImpostazioniView(LoginRequiredMixin, ListView):
+    model = CategoriaProdotto
+    template_name = 'preventivi/impostazioni.html'
+    context_object_name = 'categorie'
+
+
+class CategoriaProdottoCreateView(LoginRequiredMixin, CreateView):
+    model = CategoriaProdotto
+    form_class = CategoriaProdottoForm
+    template_name = 'preventivi/categoria_form.html'
+    success_url = reverse_lazy('impostazioni')
+
+
+class CategoriaProdottoUpdateView(LoginRequiredMixin, UpdateView):
+    model = CategoriaProdotto
+    form_class = CategoriaProdottoForm
+    template_name = 'preventivi/categoria_form.html'
+    success_url = reverse_lazy('impostazioni')
+
+
+class CategoriaProdottoDeleteView(LoginRequiredMixin, DeleteView):
+    model = CategoriaProdotto
+    template_name = 'preventivi/categoria_confirm_delete.html'
+    success_url = reverse_lazy('impostazioni')
 
 
 class PreventivoListView(LoginRequiredMixin, ListView):

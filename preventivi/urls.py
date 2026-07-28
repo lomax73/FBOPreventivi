@@ -26,4 +26,9 @@ urlpatterns = [
     path('catalogo/<int:pk>/modifica/', views.ProdottoUpdateView.as_view(), name='prodotto-update'),
     path('catalogo/<int:pk>/elimina/', views.ProdottoDeleteView.as_view(), name='prodotto-delete'),
     path('catalogo/<int:pk>/duplica/', views.prodotto_duplica, name='prodotto-duplica'),
+
+    path('impostazioni/', views.ImpostazioniView.as_view(), name='impostazioni'),
+    path('impostazioni/categorie/nuova/', views.CategoriaProdottoCreateView.as_view(), name='categoria-create'),
+    path('impostazioni/categorie/<int:pk>/modifica/', views.CategoriaProdottoUpdateView.as_view(), name='categoria-update'),
+    path('impostazioni/categorie/<int:pk>/elimina/', views.CategoriaProdottoDeleteView.as_view(), name='categoria-delete'),
 ]

@@ -62,9 +62,26 @@ class Preventivo(models.Model):
         )
 
 
+class CategoriaProdotto(models.Model):
+    """Categoria personalizzabile per organizzare il catalogo prodotti (es. Telecamere, Networking)."""
+
+    nome = models.CharField(max_length=100, unique=True)
+    ordine = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['ordine', 'nome']
+        verbose_name_plural = 'categorie prodotto'
+
+    def __str__(self):
+        return self.nome
+
+
 class Prodotto(models.Model):
     """Voce di catalogo riutilizzabile per prefillare le voci ricorrenti (es. antenne Ubiquiti, switch)."""
 
+    categoria = models.ForeignKey(
+        CategoriaProdotto, on_delete=models.SET_NULL, null=True, blank=True, related_name='prodotti',
+    )
     descrizione = models.CharField(max_length=255)
     marca = models.CharField(max_length=100, blank=True)
     specifiche = models.TextField(blank=True, help_text="Un punto elenco per riga.")
@@ -74,7 +91,7 @@ class Prodotto(models.Model):
     note = models.TextField(blank=True)
 
     class Meta:
-        ordering = ['descrizione']
+        ordering = ['categoria__ordine', 'categoria__nome', 'descrizione']
 
     def __str__(self):
         return self.descrizione

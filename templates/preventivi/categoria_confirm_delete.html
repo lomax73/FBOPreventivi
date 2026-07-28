@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Elimina categoria — FBOPreventivi{% endblock %}
+
+{% block content %}
+<h1>Elimina categoria</h1>
+<div class="card">
+    <p>
+        Eliminare la categoria <strong>{{ object.nome }}</strong>? I prodotti che la usano
+        restano nel catalogo ma senza categoria assegnata. L'operazione è definitiva.
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        <button class="btn" style="background:#ef4444;" type="submit">Elimina</button>
+        <a class="btn btn-secondary" href="{% url 'impostazioni' %}">Annulla</a>
+    </form>
+</div>
+{% endblock %}
