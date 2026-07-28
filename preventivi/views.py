@@ -253,6 +253,59 @@ def voce_save_to_catalog(request, pk):
     return render(request, 'preventivi/voce_save_to_catalog_confirm.html', {'voce': voce})
 
 
+@login_required
+def preventivo_duplica(request, pk):
+    originale = get_object_or_404(Preventivo, pk=pk)
+    if request.method != 'POST':
+        return redirect('quote-list')
+
+    revisione_copia = f'{originale.revisione}-copia'
+    suffisso = 2
+    while Preventivo.objects.filter(numero=originale.numero, revisione=revisione_copia).exists():
+        revisione_copia = f'{originale.revisione}-copia{suffisso}'
+        suffisso += 1
+
+    copia = Preventivo.objects.create(
+        numero=originale.numero,
+        revisione=revisione_copia,
+        descrizione_interna=originale.descrizione_interna,
+        cliente_id=originale.cliente_id,
+        data=originale.data,
+        oggetto_titolo=originale.oggetto_titolo,
+        oggetto_righe=originale.oggetto_righe,
+        condizioni_fornitura=originale.condizioni_fornitura,
+        creato_da=request.user,
+    )
+
+    for sezione in originale.sezioni.prefetch_related('voci'):
+        nuova_sezione = SezionePreventivo.objects.create(
+            preventivo=copia, titolo=sezione.titolo, ordine=sezione.ordine,
+        )
+        for voce in sezione.voci.all():
+            nuova_voce = VoceProventivo(
+                sezione=nuova_sezione,
+                prodotto=voce.prodotto,
+                ordine=voce.ordine,
+                descrizione=voce.descrizione,
+                marca=voce.marca,
+                specifiche=voce.specifiche,
+                quantita=voce.quantita,
+                unita_misura=voce.unita_misura,
+                prezzo_unitario=voce.prezzo_unitario,
+                prezzo_scontato=voce.prezzo_scontato,
+                note=voce.note,
+                escluso_da_totale=voce.escluso_da_totale,
+            )
+            if voce.immagine:
+                nuova_voce.immagine.save(
+                    Path(voce.immagine.name).name, ContentFile(voce.immagine.read()), save=False,
+                )
+            nuova_voce.save()
+
+    messages.success(request, f'Preventivo duplicato: {copia.numero} rev. {copia.revisione}.')
+    return redirect('preventivo-update', pk=copia.pk)
+
+
 def preventivo_pdf(request, pk):
     preventivo = get_object_or_404(
         Preventivo.objects.prefetch_related('sezioni__voci'), pk=pk,

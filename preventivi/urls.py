@@ -8,6 +8,7 @@ urlpatterns = [
     path('preventivi/<int:pk>/', views.PreventivoDetailView.as_view(), name='preventivo-detail'),
     path('preventivi/<int:pk>/modifica/', views.PreventivoUpdateView.as_view(), name='preventivo-update'),
     path('preventivi/<int:pk>/elimina/', views.PreventivoDeleteView.as_view(), name='preventivo-delete'),
+    path('preventivi/<int:pk>/duplica/', views.preventivo_duplica, name='preventivo-duplica'),
     path('preventivi/<int:pk>/pdf/', views.preventivo_pdf, name='preventivo-pdf'),
 
     path('preventivi/<int:preventivo_pk>/sezioni/nuova/', views.SezionePreventivoCreateView.as_view(), name='sezione-create'),
