@@ -11,13 +11,14 @@
 {% if preventivi %}
 <table>
     <thead>
-        <tr><th>Numero</th><th>Rev.</th><th>Cliente</th><th>Data</th><th>Stato</th><th>Totale</th><th></th></tr>
+        <tr><th>Numero</th><th>Rev.</th><th>Descrizione</th><th>Cliente</th><th>Data</th><th>Stato</th><th>Totale</th><th></th></tr>
     </thead>
     <tbody>
         {% for preventivo in preventivi %}
         <tr>
             <td><a href="{% url 'preventivo-detail' preventivo.pk %}">{{ preventivo.numero }}</a></td>
             <td>{{ preventivo.revisione }}</td>
+            <td>{{ preventivo.descrizione_interna|default:"—" }}</td>
             <td>{{ preventivo.cliente }}</td>
             <td>{{ preventivo.data|date:"d/m/Y" }}</td>
             <td>{{ preventivo.get_stato_display }}</td>

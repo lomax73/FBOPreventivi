@@ -6,6 +6,9 @@
 <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
     <div>
         <h1>{{ preventivo.numero }} <span style="color:#94a3b8; font-weight:500;">rev. {{ preventivo.revisione }}</span></h1>
+        {% if preventivo.descrizione_interna %}
+        <p style="color:#475569; margin:0 0 0.25rem; font-weight:500;">{{ preventivo.descrizione_interna }}</p>
+        {% endif %}
         <p style="color:#64748b; margin:0;">{{ preventivo.cliente }} &middot; {{ preventivo.data|date:"d/m/Y" }} &middot; {{ preventivo.get_stato_display }}</p>
     </div>
     <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">

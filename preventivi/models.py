@@ -21,6 +21,10 @@ class Preventivo(models.Model):
 
     numero = models.CharField(max_length=20, help_text="Es. 1045_26")
     revisione = models.CharField(max_length=20, blank=True, default='1.0')
+    descrizione_interna = models.CharField(
+        max_length=200, blank=True,
+        help_text="Descrizione breve per identificare rapidamente il preventivo (es. 'WiFi sede Milano'). Non compare nel PDF.",
+    )
     cliente_id = models.UUIDField(
         help_text="Riferimento al cliente nell'anagrafica condivisa del Portale (clienti/api/internal/).",
     )
