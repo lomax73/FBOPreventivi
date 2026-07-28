@@ -370,7 +370,9 @@ def voce_toggle_evidenza(request, pk):
 def voce_save_to_catalog(request, pk):
     voce = get_object_or_404(VoceProventivo, pk=pk)
     if request.method == 'POST':
+        categoria_pk = request.POST.get('categoria') or None
         prodotto = Prodotto.objects.create(
+            categoria_id=categoria_pk,
             descrizione=voce.descrizione, marca=voce.marca, specifiche=voce.specifiche,
             unita_misura=voce.unita_misura, prezzo_unitario=voce.prezzo_unitario, note=voce.note,
         )
@@ -378,9 +380,12 @@ def voce_save_to_catalog(request, pk):
             prodotto.immagine.save(
                 Path(voce.immagine.name).name, ContentFile(voce.immagine.read()), save=True,
             )
+        voce.prodotto = prodotto
+        voce.save(update_fields=['prodotto'])
         messages.success(request, f'"{voce.descrizione}" salvata nel catalogo prodotti.')
         return redirect('preventivo-detail', pk=voce.sezione.preventivo_id)
-    return render(request, 'preventivi/voce_save_to_catalog_confirm.html', {'voce': voce})
+    categorie = CategoriaProdotto.objects.all()
+    return render(request, 'preventivi/voce_save_to_catalog_confirm.html', {'voce': voce, 'categorie': categorie})
 
 
 @login_required

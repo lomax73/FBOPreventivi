@@ -21,6 +21,15 @@
     </p>
     <form method="post">
         {% csrf_token %}
+        <p>
+            <label for="id_categoria">Categoria:</label>
+            <select name="categoria" id="id_categoria">
+                <option value="">----------</option>
+                {% for categoria in categorie %}
+                <option value="{{ categoria.pk }}">{{ categoria.nome }}</option>
+                {% endfor %}
+            </select>
+        </p>
         <button class="btn" type="submit">Salva nel catalogo</button>
         <a class="btn btn-secondary" href="{% url 'preventivo-detail' voce.sezione.preventivo_id %}">Annulla</a>
     </form>
