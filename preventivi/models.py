@@ -25,6 +25,10 @@ class Preventivo(models.Model):
         max_length=200, blank=True,
         help_text="Descrizione breve per identificare rapidamente il preventivo (es. 'WiFi sede Milano'). Non compare nel PDF.",
     )
+    progetto = models.CharField(
+        max_length=200, blank=True,
+        help_text="Nome del progetto/commessa, usato per raggruppare i preventivi correlati nell'elenco.",
+    )
     cliente_id = models.UUIDField(
         help_text="Riferimento al cliente nell'anagrafica condivisa del Portale (clienti/api/internal/).",
     )

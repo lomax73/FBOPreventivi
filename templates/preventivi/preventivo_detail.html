@@ -9,6 +9,9 @@
         {% if preventivo.descrizione_interna %}
         <p style="color:#475569; margin:0 0 0.25rem; font-weight:500;">{{ preventivo.descrizione_interna }}</p>
         {% endif %}
+        {% if preventivo.progetto %}
+        <p style="color:#94a3b8; margin:0 0 0.25rem; font-size:0.85rem;">Progetto: {{ preventivo.progetto }}</p>
+        {% endif %}
         <p style="color:#64748b; margin:0;">{{ preventivo.cliente }} &middot; {{ preventivo.data|date:"d/m/Y" }} &middot; {{ preventivo.get_stato_display }}</p>
     </div>
     <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">

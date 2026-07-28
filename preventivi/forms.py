@@ -27,7 +27,7 @@ class PreventivoForm(forms.ModelForm):
     class Meta:
         model = Preventivo
         fields = [
-            'numero', 'revisione', 'descrizione_interna', 'data',
+            'numero', 'revisione', 'descrizione_interna', 'progetto', 'data',
             'oggetto_titolo', 'oggetto_righe', 'condizioni_fornitura', 'stato',
         ]
         widgets = {

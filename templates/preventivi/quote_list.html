@@ -9,36 +9,19 @@
 </div>
 
 {% if preventivi %}
-<table>
-    <thead>
-        <tr><th>Numero</th><th>Rev.</th><th>Descrizione</th><th>Cliente</th><th>Data</th><th>Stato</th><th>Totale</th><th></th></tr>
-    </thead>
-    <tbody>
-        {% for preventivo in preventivi %}
-        <tr>
-            <td><a href="{% url 'preventivo-detail' preventivo.pk %}">{{ preventivo.numero }}</a></td>
-            <td>{{ preventivo.revisione }}</td>
-            <td>{{ preventivo.descrizione_interna|default:"—" }}</td>
-            <td>{{ preventivo.cliente }}</td>
-            <td>{{ preventivo.data|date:"d/m/Y" }}</td>
-            <td>{{ preventivo.get_stato_display }}</td>
-            <td>&euro; {{ preventivo.totale|floatformat:2 }}</td>
-            <td style="white-space:nowrap;">
-                <a href="{% url 'preventivo-update' preventivo.pk %}">Modifica</a>
-                <form action="{% url 'preventivo-duplica' preventivo.pk %}" method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" title="Duplica" aria-label="Duplica" style="vertical-align:middle; background:none; border:none; padding:0; cursor:pointer; color:#6b7280; margin-left:0.5rem;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    </button>
-                </form>
-                <a href="{% url 'preventivo-delete' preventivo.pk %}" title="Elimina" aria-label="Elimina" style="vertical-align:middle; color:#ef4444; margin-left:0.5rem;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% for gruppo in gruppi %}
+<details class="card" style="padding:0; margin-bottom:1rem;" open>
+    <summary style="cursor:pointer; padding:1rem 1.25rem; font-family:var(--font-display); font-weight:600; color:var(--navy); font-size:1.05rem; list-style:none; display:flex; align-items:center; justify-content:space-between;">
+        <span>{{ gruppo.progetto }}</span>
+        <span style="color:#94a3b8; font-weight:500; font-size:0.85rem;">{{ gruppo.preventivi|length }} preventiv{{ gruppo.preventivi|length|pluralize:"o,i" }}</span>
+    </summary>
+    {% include 'preventivi/_preventivi_table.html' with preventivi=gruppo.preventivi %}
+</details>
+{% endfor %}
+
+{% if senza_progetto %}
+{% include 'preventivi/_preventivi_table.html' with preventivi=senza_progetto plain=True %}
+{% endif %}
 {% else %}
 <p>Nessun preventivo ancora. <a href="{% url 'preventivo-create' %}">Creane uno</a>.</p>
 {% endif %}

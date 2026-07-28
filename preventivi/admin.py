@@ -34,9 +34,9 @@ class SezionePreventivoInline(admin.TabularInline):
 
 @admin.register(Preventivo)
 class PreventivoAdmin(admin.ModelAdmin):
-    list_display = ('numero', 'revisione', 'cliente_id', 'data', 'stato', 'totale_display')
+    list_display = ('numero', 'revisione', 'progetto', 'cliente_id', 'data', 'stato', 'totale_display')
     list_filter = ('stato',)
-    search_fields = ('numero',)
+    search_fields = ('numero', 'progetto')
     inlines = [SezionePreventivoInline]
 
     @admin.display(description='Totale')

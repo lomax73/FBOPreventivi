@@ -160,7 +160,21 @@ class PreventivoListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['preventivi'] = _attach_clienti(context['preventivi'])
+        preventivi = _attach_clienti(context['preventivi'])
+        context['preventivi'] = preventivi
+
+        gruppi = {}
+        senza_progetto = []
+        for preventivo in preventivi:
+            if preventivo.progetto:
+                gruppi.setdefault(preventivo.progetto, []).append(preventivo)
+            else:
+                senza_progetto.append(preventivo)
+        context['gruppi'] = [
+            {'progetto': progetto, 'preventivi': elenco}
+            for progetto, elenco in sorted(gruppi.items(), key=lambda g: g[0].lower())
+        ]
+        context['senza_progetto'] = senza_progetto
         return context
 
 
