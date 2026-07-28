@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.base import ContentFile
+from django.db.models import F
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -80,6 +81,30 @@ class ProdottoDeleteView(LoginRequiredMixin, DeleteView):
     model = Prodotto
     template_name = 'preventivi/prodotto_confirm_delete.html'
     success_url = reverse_lazy('prodotto-list')
+
+
+@login_required
+def prodotto_duplica(request, pk):
+    originale = get_object_or_404(Prodotto, pk=pk)
+    if request.method != 'POST':
+        return redirect('prodotto-list')
+
+    copia = Prodotto(
+        descrizione=f'{originale.descrizione}_Copia',
+        marca=originale.marca,
+        specifiche=originale.specifiche,
+        unita_misura=originale.unita_misura,
+        prezzo_unitario=originale.prezzo_unitario,
+        note=originale.note,
+    )
+    if originale.immagine:
+        copia.immagine.save(
+            Path(originale.immagine.name).name, ContentFile(originale.immagine.read()), save=False,
+        )
+    copia.save()
+
+    messages.success(request, f'"{originale.descrizione}" duplicato nel catalogo.')
+    return redirect('prodotto-list')
 
 
 class PreventivoListView(LoginRequiredMixin, ListView):
@@ -234,6 +259,39 @@ class VoceProventivoDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return reverse('preventivo-detail', args=[self.object.sezione.preventivo_id])
+
+
+@login_required
+def voce_duplica(request, pk):
+    originale = get_object_or_404(VoceProventivo, pk=pk)
+    if request.method != 'POST':
+        return redirect('preventivo-detail', pk=originale.sezione.preventivo_id)
+
+    sezione = originale.sezione
+    sezione.voci.filter(ordine__gt=originale.ordine).update(ordine=F('ordine') + 1)
+
+    copia = VoceProventivo(
+        sezione=sezione,
+        prodotto=originale.prodotto,
+        ordine=originale.ordine + 1,
+        descrizione=f'{originale.descrizione}_Copia',
+        marca=originale.marca,
+        specifiche=originale.specifiche,
+        quantita=originale.quantita,
+        unita_misura=originale.unita_misura,
+        prezzo_unitario=originale.prezzo_unitario,
+        prezzo_scontato=originale.prezzo_scontato,
+        note=originale.note,
+        escluso_da_totale=originale.escluso_da_totale,
+    )
+    if originale.immagine:
+        copia.immagine.save(
+            Path(originale.immagine.name).name, ContentFile(originale.immagine.read()), save=False,
+        )
+    copia.save()
+
+    messages.success(request, f'"{originale.descrizione}" duplicata.')
+    return redirect('preventivo-detail', pk=sezione.preventivo_id)
 
 
 @login_required
