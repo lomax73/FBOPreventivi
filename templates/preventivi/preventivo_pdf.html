@@ -131,29 +131,29 @@
                 <td>{{ voce.quantita }} {{ voce.unita_misura }}</td>
                 <td>
                     {% if voce.prezzo_scontato is not None %}
-                        <span class="prezzo-barrato">&euro; {{ voce.prezzo_unitario|floatformat:2 }}</span><br>
-                        &euro; {{ voce.prezzo_scontato|floatformat:2 }}
+                        <span class="prezzo-barrato">&euro; {{ voce.prezzo_unitario|floatformat:2 }} + IVA</span><br>
+                        &euro; {{ voce.prezzo_scontato|floatformat:2 }} + IVA
                     {% else %}
-                        &euro; {{ voce.prezzo_unitario|floatformat:2 }}
+                        &euro; {{ voce.prezzo_unitario|floatformat:2 }} + IVA
                     {% endif %}
                 </td>
                 <td>
                     {% if voce.escluso_da_totale %}
                         <span class="escluso">escluso</span>
                     {% else %}
-                        &euro; {{ voce.totale_riga|floatformat:2 }}
+                        &euro; {{ voce.totale_riga|floatformat:2 }} + IVA
                     {% endif %}
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    <p class="totale-sezione">Totale sezione: &euro; {{ sezione.totale|floatformat:2 }}</p>
+    <p class="totale-sezione">Totale sezione: &euro; {{ sezione.totale|floatformat:2 }} + IVA</p>
 </div>
 {% endif %}
 {% endfor %}
 
-<div class="totale">Totale: &euro; {{ preventivo.totale|floatformat:2 }}</div>
+<div class="totale">Totale: &euro; {{ preventivo.totale|floatformat:2 }} + IVA</div>
 
 <div class="condizioni">
     <h2>Condizioni di fornitura</h2>
