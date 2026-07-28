@@ -47,6 +47,7 @@
     .voce-note { color: #94a3b8; font-size: 8pt; font-style: italic; margin-top: 3pt; }
     .prezzo-barrato { text-decoration: line-through; color: #94a3b8; }
     .escluso { color: #94a3b8; }
+    .voce-evidenza { background: #fefbeb; }
 
     .totale { text-align: right; font-size: 12pt; margin: 16pt 0; page-break-inside: avoid; }
     .totale-sezione { text-align: right; font-size: 9pt; color: #64748b; margin: 4pt 0 0; page-break-inside: avoid; }
@@ -116,7 +117,7 @@
             {% for voce in sezione.voci.all %}
             <tr>
                 <td>{% if voce.immagine %}<img class="voce-img" src="{{ voce.immagine_uri }}" alt="">{% endif %}</td>
-                <td>
+                <td{% if voce.in_evidenza %} class="voce-evidenza"{% endif %}>
                     <strong>{{ voce.descrizione }}</strong>
                     {% if voce.marca %}<br><span class="voce-marca">Marca: {{ voce.marca }}</span>{% endif %}
                     {% if voce.specifiche %}

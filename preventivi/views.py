@@ -343,6 +343,7 @@ def voce_duplica(request, pk):
         prezzo_scontato=originale.prezzo_scontato,
         note=originale.note,
         escluso_da_totale=originale.escluso_da_totale,
+        in_evidenza=originale.in_evidenza,
     )
     if originale.immagine:
         copia.immagine.save(
@@ -352,6 +353,17 @@ def voce_duplica(request, pk):
 
     messages.success(request, f'"{originale.descrizione}" duplicata.')
     return redirect('preventivo-detail', pk=sezione.preventivo_id)
+
+
+@login_required
+def voce_toggle_evidenza(request, pk):
+    voce = get_object_or_404(VoceProventivo, pk=pk)
+    if request.method != 'POST':
+        return redirect('preventivo-detail', pk=voce.sezione.preventivo_id)
+
+    voce.in_evidenza = not voce.in_evidenza
+    voce.save(update_fields=['in_evidenza'])
+    return redirect('preventivo-detail', pk=voce.sezione.preventivo_id)
 
 
 @login_required

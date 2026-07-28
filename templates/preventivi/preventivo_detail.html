@@ -59,14 +59,25 @@
     {% if sezione.voci.all %}
     <table>
         <thead>
-            <tr><th></th><th>Descrizione</th><th>Qt.</th><th>Prezzo</th><th>Totale</th><th></th></tr>
+            <tr><th title="Evidenzia">&#9733;</th><th></th><th>Descrizione</th><th>Qt.</th><th>Prezzo</th><th>Totale</th><th></th></tr>
         </thead>
         <tbody>
             {% for voce in sezione.voci.all %}
             <tr>
-                <td>{% if voce.immagine %}<img src="{{ voce.immagine.url }}" alt="" style="max-width:50px; max-height:50px; border-radius:6px;">{% endif %}</td>
                 <td>
+                    <form action="{% url 'voce-toggle-evidenza' voce.pk %}" method="post" style="margin:0;">
+                        {% csrf_token %}
+                        <input type="checkbox" title="Evidenzia questa voce per il cliente" aria-label="Evidenzia questa voce per il cliente" {% if voce.in_evidenza %}checked{% endif %} onchange="this.form.submit()" style="width:auto; margin:0; cursor:pointer;">
+                    </form>
+                </td>
+                <td>{% if voce.immagine %}<img src="{{ voce.immagine.url }}" alt="" style="max-width:50px; max-height:50px; border-radius:6px;">{% endif %}</td>
+                <td{% if voce.in_evidenza %} style="background:#fefbeb;"{% endif %}>
                     <strong>{{ voce.descrizione }}</strong>
+                    {% if voce.prodotto %}
+                    <span title="Da catalogo: {{ voce.prodotto.descrizione }}" aria-label="Da catalogo: {{ voce.prodotto.descrizione }}" style="display:inline-block; vertical-align:middle; margin-left:0.35rem; color:var(--azure-dark);">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    </span>
+                    {% endif %}
                     {% if voce.marca %}<br><span style="color:#64748b; font-size:0.85rem;">{{ voce.marca }}</span>{% endif %}
                     {% if voce.note %}<br><span style="color:#94a3b8; font-size:0.8rem;">{{ voce.note }}</span>{% endif %}
                 </td>

@@ -19,6 +19,7 @@ urlpatterns = [
     path('voci/<int:pk>/modifica/', views.VoceProventivoUpdateView.as_view(), name='voce-update'),
     path('voci/<int:pk>/elimina/', views.VoceProventivoDeleteView.as_view(), name='voce-delete'),
     path('voci/<int:pk>/duplica/', views.voce_duplica, name='voce-duplica'),
+    path('voci/<int:pk>/evidenza/', views.voce_toggle_evidenza, name='voce-toggle-evidenza'),
     path('voci/<int:pk>/salva-catalogo/', views.voce_save_to_catalog, name='voce-save-to-catalog'),
 
     path('catalogo/', views.ProdottoListView.as_view(), name='prodotto-list'),

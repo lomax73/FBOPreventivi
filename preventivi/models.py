@@ -140,6 +140,10 @@ class VoceProventivo(models.Model):
         default=False,
         help_text="Voce descritta nel preventivo ma non conteggiata nel totale (es. a carico del cliente).",
     )
+    in_evidenza = models.BooleanField(
+        default=False,
+        help_text="Evidenzia la voce con uno sfondo tenue, sia nella scheda che nel PDF, per attirare l'attenzione del cliente.",
+    )
 
     class Meta:
         ordering = ['ordine', 'id']
