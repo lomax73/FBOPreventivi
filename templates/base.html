@@ -115,6 +115,10 @@
 
         .card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
 
+        details.card summary::-webkit-details-marker { display: none; }
+        details.card summary::after { content: '▸'; color: #94a3b8; margin-left: 0.75rem; transition: transform 0.15s; }
+        details.card[open] summary::after { transform: rotate(90deg); }
+
         form p { margin: 0.6rem 0; }
         label { display: block; font-weight: 600; margin-bottom: 0.25rem; font-size: 0.9rem; color: var(--navy); }
         input, textarea, select {

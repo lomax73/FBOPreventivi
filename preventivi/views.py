@@ -63,6 +63,24 @@ class ProdottoListView(LoginRequiredMixin, ListView):
     context_object_name = 'prodotti'
     queryset = Prodotto.objects.select_related('categoria')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        gruppi = {}
+        senza_categoria = []
+        for prodotto in context['prodotti']:
+            if prodotto.categoria:
+                gruppi.setdefault(prodotto.categoria, []).append(prodotto)
+            else:
+                senza_categoria.append(prodotto)
+        gruppi_lista = [
+            {'categoria': categoria, 'prodotti': prodotti}
+            for categoria, prodotti in sorted(gruppi.items(), key=lambda g: (g[0].ordine, g[0].nome))
+        ]
+        if senza_categoria:
+            gruppi_lista.append({'categoria': None, 'prodotti': senza_categoria})
+        context['gruppi'] = gruppi_lista
+        return context
+
 
 class ProdottoCreateView(LoginRequiredMixin, CreateView):
     model = Prodotto
