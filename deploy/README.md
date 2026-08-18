@@ -31,6 +31,9 @@ sudo -u preventivi python3 -m venv venv
 sudo -u preventivi venv/bin/pip install -r requirements.txt
 
 cp .env.example .env   # poi valorizzare DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS, INTERNAL_API_TOKEN
+                        # DJANGO_DEBUG=false — .env.example lo lascia a "true", NON dimenticarlo:
+                        # con DEBUG=True qualunque eccezione espone tutte le variabili
+                        # d'ambiente (SECRET_KEY, INTERNAL_API_TOKEN, credenziali cifrate)
 sudo -u preventivi venv/bin/python manage.py migrate
 sudo -u preventivi venv/bin/python manage.py collectstatic --noinput
 sudo -u preventivi venv/bin/python manage.py createsuperuser
