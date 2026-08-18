@@ -75,6 +75,13 @@ pubblicamente — il location block dedicato è già incluso in
    FBOPreventivi → campo "API token"), insieme a `internal_base_url =
    https://127.0.0.1:8445`.
 
+## Anagrafica clienti condivisa (dal Portale)
+
+`PORTAL_INTERNAL_CA_CERT=/etc/ssl/portal/selfsigned.crt` — verifica TLS
+reale contro il certificato self-signed del Portale invece di disattivarla
+del tutto (RedFlag id 91). Il file è leggibile da qualunque utente di
+sistema (permessi `644`).
+
 ## Deploy di un aggiornamento
 
 ```
