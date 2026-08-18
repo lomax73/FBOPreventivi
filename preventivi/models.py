@@ -2,6 +2,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.urls import reverse
 
@@ -91,7 +92,9 @@ class Prodotto(models.Model):
     specifiche = models.TextField(blank=True, help_text="Un punto elenco per riga.")
     immagine = models.ImageField(upload_to='preventivi/catalogo/', blank=True, null=True)
     unita_misura = models.CharField(max_length=20, blank=True, default='Cad')
-    prezzo_unitario = models.DecimalField('Prezzo di listino', max_digits=10, decimal_places=2)
+    prezzo_unitario = models.DecimalField(
+        'Prezzo di listino', max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0'))],
+    )
     note = models.TextField(blank=True)
 
     class Meta:
@@ -128,11 +131,16 @@ class VoceProventivo(models.Model):
     marca = models.CharField(max_length=100, blank=True)
     specifiche = models.TextField(blank=True, help_text="Un punto elenco per riga.")
     immagine = models.ImageField(upload_to='preventivi/voci/', blank=True, null=True)
-    quantita = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    quantita = models.DecimalField(
+        max_digits=10, decimal_places=2, default=1, validators=[MinValueValidator(Decimal('0'))],
+    )
     unita_misura = models.CharField(max_length=20, blank=True, default='Cad')
-    prezzo_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    prezzo_unitario = models.DecimalField(
+        max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0'))],
+    )
     prezzo_scontato = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Se valorizzato, il prezzo unitario viene mostrato barrato nel PDF.",
     )
     note = models.TextField(blank=True, help_text="Es. \"a vostro carico\", \"manodopera a consuntivo 35€/h\".")
