@@ -441,6 +441,7 @@ def preventivo_duplica(request, pk):
     return redirect('preventivo-update', pk=copia.pk)
 
 
+@login_required
 def preventivo_pdf(request, pk):
     preventivo = get_object_or_404(
         Preventivo.objects.prefetch_related('sezioni__voci'), pk=pk,
