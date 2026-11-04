@@ -407,6 +407,7 @@ def preventivo_duplica(request, pk):
         numero=originale.numero,
         revisione=revisione_copia,
         descrizione_interna=originale.descrizione_interna,
+        progetto=originale.progetto,
         cliente_id=originale.cliente_id,
         data=originale.data,
         oggetto_titolo=originale.oggetto_titolo,
@@ -433,8 +434,8 @@ def preventivo_duplica(request, pk):
                 prezzo_scontato=voce.prezzo_scontato,
                 note=voce.note,
                 escluso_da_totale=voce.escluso_da_totale,
-            )
                 in_evidenza=voce.in_evidenza,
+            )
             if voce.immagine:
                 nuova_voce.immagine.save(
                     Path(voce.immagine.name).name, ContentFile(voce.immagine.read()), save=False,
