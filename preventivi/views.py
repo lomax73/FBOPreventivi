@@ -473,33 +473,42 @@ def preventivo_excel(request, pk):
     preventivo = get_object_or_404(
         Preventivo.objects.prefetch_related('sezioni__voci'), pk=pk,
     )
+    voci = [voce for sezione in preventivo.sezioni.all() for voce in sezione.voci.all()]
+    con_sconto = any(voce.prezzo_scontato is not None for voce in voci)
+
     wb = Workbook()
     ws = wb.active
     ws.title = 'Preventivo'
     bold = Font(bold=True)
     eur = '#,##0.00'
 
-    ws.append(['Descrizione', 'Quantità', 'Prezzo', 'Totale'])
+    intestazioni = ['Descrizione', 'Quantità']
+    if con_sconto:
+        intestazioni.append('Prezzo non scontato')
+    intestazioni += ['Prezzo', 'Totale']
+    ws.append(intestazioni)
     for cell in ws[1]:
         cell.font = bold
-    for sezione in preventivo.sezioni.all():
-        ws.append([sezione.titolo])
-        ws.cell(row=ws.max_row, column=1).font = bold
-        for voce in sezione.voci.all():
-            ws.append([voce.descrizione, voce.quantita, voce.prezzo_effettivo, voce.totale_riga])
-            riga = ws.max_row
-            ws.cell(row=riga, column=2).number_format = '#,##0.##'
-            ws.cell(row=riga, column=3).number_format = eur
-            ws.cell(row=riga, column=4).number_format = eur
-    ws.append(['', '', 'TOTALE', preventivo.totale])
-    riga = ws.max_row
-    ws.cell(row=riga, column=3).font = bold
-    ws.cell(row=riga, column=4).font = bold
-    ws.cell(row=riga, column=4).number_format = eur
+
+    for voce in voci:
+        riga = [voce.descrizione, voce.quantita]
+        if con_sconto:
+            riga.append(voce.prezzo_unitario if voce.prezzo_scontato is not None else None)
+        riga += [voce.prezzo_effettivo, voce.totale_riga]
+        ws.append(riga)
+        for cell in ws[ws.max_row][1:]:
+            cell.number_format = eur
+        ws.cell(row=ws.max_row, column=2).number_format = '#,##0.##'
+
+    totale = [''] * (len(intestazioni) - 2) + ['TOTALE', preventivo.totale]
+    ws.append(totale)
+    for cell in ws[ws.max_row]:
+        cell.font = bold
+    ws.cell(row=ws.max_row, column=len(intestazioni)).number_format = eur
 
     ws.column_dimensions['A'].width = 70
-    for col in 'BCD':
-        ws.column_dimensions[col].width = 14
+    for i in range(2, len(intestazioni) + 1):
+        ws.column_dimensions[chr(64 + i)].width = 20 if con_sconto and i == 3 else 14
     for row in ws.iter_rows(min_row=2):
         row[0].alignment = Alignment(wrap_text=True, vertical='top')
 
