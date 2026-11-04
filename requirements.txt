@@ -4,3 +4,4 @@ gunicorn>=26.0
 requests>=2.31
 Pillow>=12.0
 weasyprint>=69.0
+openpyxl>=3.1

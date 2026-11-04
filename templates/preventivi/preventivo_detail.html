@@ -20,6 +20,7 @@
         <a class="btn btn-secondary" href="{% url 'sezione-create' preventivo.pk %}">+ Aggiungi sezione</a>
         {% if sezioni %}
         <a class="btn" href="{% url 'preventivo-pdf' preventivo.pk %}" target="_blank">Genera PDF</a>
+        <a class="btn btn-secondary" href="{% url 'preventivo-excel' preventivo.pk %}">Esporta Excel</a>
         {% endif %}
     </div>
 </div>

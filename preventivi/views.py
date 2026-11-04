@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from io import BytesIO
 from pathlib import Path
 
 from django.contrib import messages
@@ -13,6 +14,8 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.text import slugify
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font
 from weasyprint import HTML
 
 from . import portal_client
@@ -431,6 +434,7 @@ def preventivo_duplica(request, pk):
                 note=voce.note,
                 escluso_da_totale=voce.escluso_da_totale,
             )
+                in_evidenza=voce.in_evidenza,
             if voce.immagine:
                 nuova_voce.immagine.save(
                     Path(voce.immagine.name).name, ContentFile(voce.immagine.read()), save=False,
@@ -460,4 +464,50 @@ def preventivo_pdf(request, pk):
     response = HttpResponse(pdf_bytes, content_type='application/pdf')
     filename = f'preventivo-{slugify(preventivo.numero)}-rev{slugify(preventivo.revisione)}.pdf'
     response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response
+
+
+@login_required
+def preventivo_excel(request, pk):
+    preventivo = get_object_or_404(
+        Preventivo.objects.prefetch_related('sezioni__voci'), pk=pk,
+    )
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Preventivo'
+    bold = Font(bold=True)
+    eur = '#,##0.00'
+
+    ws.append(['Descrizione', 'Quantità', 'Prezzo', 'Totale'])
+    for cell in ws[1]:
+        cell.font = bold
+    for sezione in preventivo.sezioni.all():
+        ws.append([sezione.titolo])
+        ws.cell(row=ws.max_row, column=1).font = bold
+        for voce in sezione.voci.all():
+            ws.append([voce.descrizione, voce.quantita, voce.prezzo_effettivo, voce.totale_riga])
+            riga = ws.max_row
+            ws.cell(row=riga, column=2).number_format = '#,##0.##'
+            ws.cell(row=riga, column=3).number_format = eur
+            ws.cell(row=riga, column=4).number_format = eur
+    ws.append(['', '', 'TOTALE', preventivo.totale])
+    riga = ws.max_row
+    ws.cell(row=riga, column=3).font = bold
+    ws.cell(row=riga, column=4).font = bold
+    ws.cell(row=riga, column=4).number_format = eur
+
+    ws.column_dimensions['A'].width = 70
+    for col in 'BCD':
+        ws.column_dimensions[col].width = 14
+    for row in ws.iter_rows(min_row=2):
+        row[0].alignment = Alignment(wrap_text=True, vertical='top')
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    filename = f'preventivo-{slugify(preventivo.numero)}-rev{slugify(preventivo.revisione)}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response

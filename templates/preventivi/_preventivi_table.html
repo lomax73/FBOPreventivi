@@ -14,6 +14,7 @@
             <td>&euro; {{ preventivo.totale|floatformat:2 }}</td>
             <td style="white-space:nowrap;">
                 <a href="{% url 'preventivo-update' preventivo.pk %}">Modifica</a>
+                <a href="{% url 'preventivo-excel' preventivo.pk %}" title="Esporta Excel" style="margin-left:0.5rem;">Excel</a>
                 <form action="{% url 'preventivo-duplica' preventivo.pk %}" method="post" style="display:inline;">
                     {% csrf_token %}
                     <button type="submit" title="Duplica" aria-label="Duplica" style="vertical-align:middle; background:none; border:none; padding:0; cursor:pointer; color:#6b7280; margin-left:0.5rem;">

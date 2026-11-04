@@ -10,6 +10,7 @@ urlpatterns = [
     path('preventivi/<int:pk>/elimina/', views.PreventivoDeleteView.as_view(), name='preventivo-delete'),
     path('preventivi/<int:pk>/duplica/', views.preventivo_duplica, name='preventivo-duplica'),
     path('preventivi/<int:pk>/pdf/', views.preventivo_pdf, name='preventivo-pdf'),
+    path('preventivi/<int:pk>/excel/', views.preventivo_excel, name='preventivo-excel'),
 
     path('preventivi/<int:preventivo_pk>/sezioni/nuova/', views.SezionePreventivoCreateView.as_view(), name='sezione-create'),
     path('sezioni/<int:pk>/modifica/', views.SezionePreventivoUpdateView.as_view(), name='sezione-update'),
