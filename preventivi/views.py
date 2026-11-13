@@ -14,6 +14,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.text import slugify
 from django.views.decorators.clickjacking import xframe_options_sameorigin
+from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
@@ -213,6 +214,7 @@ class PreventivoDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['sezioni'] = self.object.sezioni.prefetch_related('voci')
         context['allegati'] = self.object.allegati.all()
+        context['stati'] = Preventivo.Stato.choices
         context['allegato_form'] = AllegatoPreventivoForm()
         context['prodotti_catalogo'] = Prodotto.objects.all()
         _attach_clienti([self.object])
@@ -362,6 +364,24 @@ def voce_duplica(request, pk):
 
 
 @login_required
+@require_POST
+def sezione_toggle_attiva(request, pk):
+    sezione = get_object_or_404(SezionePreventivo, pk=pk)
+    sezione.attiva = not sezione.attiva
+    sezione.save(update_fields=['attiva'])
+    return redirect(reverse('preventivo-detail', args=[sezione.preventivo_id]) + f'#sezione-{sezione.pk}')
+
+
+@login_required
+@require_POST
+def sezione_toggle_confermata(request, pk):
+    sezione = get_object_or_404(SezionePreventivo, pk=pk)
+    sezione.confermata = not sezione.confermata
+    sezione.save(update_fields=['confermata'])
+    return redirect(reverse('preventivo-detail', args=[sezione.preventivo_id]) + f'#sezione-{sezione.pk}')
+
+
+@login_required
 def voce_toggle_evidenza(request, pk):
     voce = get_object_or_404(VoceProventivo, pk=pk)
     if request.method != 'POST':
@@ -421,7 +441,7 @@ def preventivo_duplica(request, pk):
 
     for sezione in originale.sezioni.prefetch_related('voci'):
         nuova_sezione = SezionePreventivo.objects.create(
-            preventivo=copia, titolo=sezione.titolo, ordine=sezione.ordine,
+            preventivo=copia, titolo=sezione.titolo, ordine=sezione.ordine, attiva=sezione.attiva,
         )
         for voce in sezione.voci.all():
             nuova_voce = VoceProventivo(
@@ -450,6 +470,20 @@ def preventivo_duplica(request, pk):
 
 
 @login_required
+@require_POST
+def preventivo_cambia_stato(request, pk):
+    preventivo = get_object_or_404(Preventivo, pk=pk)
+    stato = request.POST.get('stato')
+    if stato in Preventivo.Stato.values:
+        preventivo.stato = stato
+        preventivo.save(update_fields=['stato', 'aggiornato_il'])
+        messages.success(request, f'Stato aggiornato: {preventivo.get_stato_display()}.')
+    else:
+        messages.error(request, 'Stato non valido.')
+    return redirect('preventivo-detail', pk=preventivo.pk)
+
+
+@login_required
 def preventivo_pdf(request, pk):
     preventivo = get_object_or_404(
         Preventivo.objects.prefetch_related('sezioni__voci'), pk=pk,
@@ -459,7 +493,7 @@ def preventivo_pdf(request, pk):
     logo_uri = logo_path.as_uri() if logo_path.exists() else None
     html_string = render_to_string('preventivi/preventivo_pdf.html', {
         'preventivo': preventivo,
-        'sezioni': preventivo.sezioni.all(),
+        'sezioni': preventivo.sezioni_attive,
         'logo_uri': logo_uri,
         'now': timezone.localtime(),
     })
@@ -476,7 +510,8 @@ def preventivo_excel(request, pk):
     preventivo = get_object_or_404(
         Preventivo.objects.prefetch_related('sezioni__voci'), pk=pk,
     )
-    voci = [voce for sezione in preventivo.sezioni.all() for voce in sezione.voci.all()]
+    sezioni = preventivo.sezioni_conteggiate
+    voci = [voce for sezione in sezioni for voce in sezione.voci.all()]
     con_sconto = any(voce.prezzo_scontato is not None for voce in voci)
 
     wb = Workbook()

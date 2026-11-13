@@ -64,11 +64,31 @@ class Preventivo(models.Model):
         return reverse('preventivo-detail', args=[self.pk])
 
     @property
+    def sezioni_attive(self):
+        return [sezione for sezione in self.sezioni.all() if sezione.attiva]
+
+    @property
+    def sezioni_confermate(self):
+        return [sezione for sezione in self.sezioni_attive if sezione.confermata]
+
+    @property
+    def ha_sezioni_confermate(self):
+        return bool(self.sezioni_confermate)
+
+    @property
+    def sezioni_conteggiate(self):
+        """Sezioni che finiscono nel totale e nell'export Excel: le confermate
+        se ce n'è almeno una, altrimenti tutte le attive."""
+        return self.sezioni_confermate or self.sezioni_attive
+
+    @property
+    def totale_complessivo(self):
+        """Totale dell'offerta completa: tutte le sezioni attive."""
+        return sum((sezione.totale for sezione in self.sezioni_attive), Decimal('0'))
+
+    @property
     def totale(self):
-        return sum(
-            (sezione.totale for sezione in self.sezioni.all()),
-            Decimal('0'),
-        )
+        return sum((sezione.totale for sezione in self.sezioni_conteggiate), Decimal('0'))
 
 
 class CategoriaProdotto(models.Model):
@@ -112,6 +132,14 @@ class SezionePreventivo(models.Model):
     preventivo = models.ForeignKey(Preventivo, on_delete=models.CASCADE, related_name='sezioni')
     titolo = models.CharField(max_length=200)
     ordine = models.PositiveIntegerField(default=0)
+    attiva = models.BooleanField(
+        default=True,
+        help_text="Sezione disattivata: esclusa da totali, PDF ed export Excel.",
+    )
+    confermata = models.BooleanField(
+        default=False,
+        help_text="Sezione accettata dal cliente. Se almeno una è confermata, il totale del preventivo conta solo quelle.",
+    )
 
     class Meta:
         ordering = ['ordine', 'id']

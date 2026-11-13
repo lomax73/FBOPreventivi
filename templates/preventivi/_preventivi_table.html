@@ -10,8 +10,8 @@
             <td>{{ preventivo.descrizione_interna|default:"—" }}</td>
             <td>{{ preventivo.cliente }}</td>
             <td>{{ preventivo.data|date:"d/m/Y" }}</td>
-            <td>{{ preventivo.get_stato_display }}</td>
-            <td>&euro; {{ preventivo.totale|floatformat:2 }}</td>
+            <td><span class="stato-badge stato-{{ preventivo.stato }}">{% if preventivo.stato == 'accettato' %}&#10003; {% endif %}{{ preventivo.get_stato_display }}</span></td>
+            <td>&euro; {{ preventivo.totale|floatformat:2 }}{% if preventivo.ha_sezioni_confermate %} <span class="stato-badge stato-accettato" title="Totale delle sole sezioni confermate" style="font-size:0.7rem;">confermato</span>{% endif %}</td>
             <td style="white-space:nowrap;">
                 <a href="{% url 'preventivo-update' preventivo.pk %}">Modifica</a>
                 <a href="{% url 'preventivo-excel' preventivo.pk %}" title="Esporta Excel" style="margin-left:0.5rem;">Excel</a>

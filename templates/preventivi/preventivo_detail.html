@@ -3,6 +3,20 @@
 {% block title %}{{ preventivo.numero }} — FBOPreventivi{% endblock %}
 
 {% block content %}
+{% if preventivo.stato == 'accettato' %}
+<div role="status" style="display:flex; align-items:center; gap:1rem; background:#16a34a; color:#fff; border-radius:10px; padding:1rem 1.25rem; margin-bottom:1.25rem; box-shadow:0 2px 8px rgba(22,163,74,0.35);">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9"/></svg>
+    <div>
+        <div style="font-family:var(--font-display); font-size:1.25rem; font-weight:700; letter-spacing:0.02em;">PREVENTIVO CONFERMATO</div>
+        <div style="opacity:0.9; font-size:0.9rem;">{% if preventivo.ha_sezioni_confermate %}{{ preventivo.sezioni_confermate|length }} di {{ preventivo.sezioni_attive|length }} sezioni confermate{% else %}Accettato dal cliente{% endif %} &middot; totale &euro; {{ preventivo.totale|floatformat:2 }}</div>
+    </div>
+</div>
+{% elif preventivo.stato == 'rifiutato' %}
+<div role="status" style="display:flex; align-items:center; gap:0.75rem; background:#fee2e2; color:#991b1b; border:1px solid #fecaca; border-radius:10px; padding:0.75rem 1.25rem; margin-bottom:1.25rem; font-weight:600;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    Preventivo rifiutato
+</div>
+{% endif %}
 <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
     <div>
         <h1>{{ preventivo.numero }} <span style="color:#94a3b8; font-weight:500;">rev. {{ preventivo.revisione }}</span></h1>
@@ -12,7 +26,17 @@
         {% if preventivo.progetto %}
         <p style="color:#94a3b8; margin:0 0 0.25rem; font-size:0.85rem;">Progetto: {{ preventivo.progetto }}</p>
         {% endif %}
-        <p style="color:#64748b; margin:0;">{{ preventivo.cliente }} &middot; {{ preventivo.data|date:"d/m/Y" }} &middot; {{ preventivo.get_stato_display }}</p>
+        <p style="color:#64748b; margin:0;">{{ preventivo.cliente }} &middot; {{ preventivo.data|date:"d/m/Y" }}</p>
+        <form method="post" action="{% url 'preventivo-cambia-stato' preventivo.pk %}" style="margin:0.6rem 0 0; display:flex; align-items:center; gap:0.5rem;">
+            {% csrf_token %}
+            <label for="id_stato" style="margin:0; font-weight:500; color:#64748b;">Stato</label>
+            <select name="stato" id="id_stato" onchange="this.form.submit()" style="width:auto;">
+                {% for valore, etichetta in stati %}
+                <option value="{{ valore }}" {% if valore == preventivo.stato %}selected{% endif %}>{{ etichetta }}</option>
+                {% endfor %}
+            </select>
+            <noscript><button class="btn btn-secondary" type="submit">Salva</button></noscript>
+        </form>
     </div>
     <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
         <a class="btn btn-secondary" href="{% url 'preventivo-update' preventivo.pk %}">Modifica</a>
@@ -37,9 +61,29 @@
 </div>
 
 {% for sezione in sezioni %}
-<div class="card">
+<div class="card" id="sezione-{{ sezione.pk }}"{% if not sezione.attiva %} style="background:#f1f5f9; opacity:0.6; filter:grayscale(1);"{% elif sezione.confermata %} style="border-left:6px solid #16a34a; background:#f0fdf4;"{% elif preventivo.ha_sezioni_confermate %} style="opacity:0.7;"{% endif %}>
     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
-        <h2 style="margin:0;">{{ sezione.titolo }}</h2>
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+            <h2 style="margin:0;">{{ sezione.titolo }}</h2>
+            <form action="{% url 'sezione-toggle-attiva' sezione.pk %}" method="post" style="margin:0;">
+                {% csrf_token %}
+                <label style="display:inline-flex; align-items:center; gap:0.35rem; margin:0; font-weight:500; cursor:pointer;" title="Se disattivata, la sezione non entra nel totale, nel PDF né nell'Excel">
+                    <input type="checkbox" {% if sezione.attiva %}checked{% endif %} onchange="this.form.submit()" style="width:auto; margin:0; cursor:pointer;"> Attiva
+                </label>
+            </form>
+            {% if not sezione.attiva %}
+            <span class="stato-badge stato-bozza">Disattivata &middot; esclusa da PDF ed Excel</span>
+            {% else %}
+            <form action="{% url 'sezione-toggle-confermata' sezione.pk %}" method="post" style="margin:0;">
+                {% csrf_token %}
+                {% if sezione.confermata %}
+                <button type="submit" class="stato-badge stato-accettato" title="Clicca per togliere la conferma" style="border:none; cursor:pointer;">&#10003; Confermata</button>
+                {% else %}
+                <button type="submit" class="stato-badge stato-bozza" title="Segna questa sezione come confermata dal cliente" style="border:1px dashed #94a3b8; cursor:pointer;">Conferma sezione</button>
+                {% endif %}
+            </form>
+            {% endif %}
+        </div>
         <div style="display:flex; gap:0.5rem; align-items:center;">
             <a class="btn btn-secondary" href="{% url 'voce-create' sezione.pk %}">+ Aggiungi voce</a>
             {% if prodotti_catalogo %}
@@ -130,7 +174,12 @@
 
 {% if sezioni %}
 <div class="card" style="text-align:right; font-size:1.1rem;">
+    {% if preventivo.ha_sezioni_confermate %}
+    <div style="color:#16a34a;"><strong>Totale confermato: &euro; {{ preventivo.totale|floatformat:2 }}</strong></div>
+    <div style="color:#94a3b8; font-size:0.9rem; margin-top:0.25rem;">Offerta completa: &euro; {{ preventivo.totale_complessivo|floatformat:2 }}</div>
+    {% else %}
     <strong>Totale: &euro; {{ preventivo.totale|floatformat:2 }}</strong>
+    {% endif %}
 </div>
 {% endif %}
 

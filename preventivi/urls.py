@@ -9,6 +9,7 @@ urlpatterns = [
     path('preventivi/<int:pk>/modifica/', views.PreventivoUpdateView.as_view(), name='preventivo-update'),
     path('preventivi/<int:pk>/elimina/', views.PreventivoDeleteView.as_view(), name='preventivo-delete'),
     path('preventivi/<int:pk>/duplica/', views.preventivo_duplica, name='preventivo-duplica'),
+    path('preventivi/<int:pk>/stato/', views.preventivo_cambia_stato, name='preventivo-cambia-stato'),
     path('preventivi/<int:pk>/pdf/', views.preventivo_pdf, name='preventivo-pdf'),
     path('preventivi/<int:pk>/excel/', views.preventivo_excel, name='preventivo-excel'),
 
@@ -18,6 +19,8 @@ urlpatterns = [
 
     path('preventivi/<int:preventivo_pk>/sezioni/nuova/', views.SezionePreventivoCreateView.as_view(), name='sezione-create'),
     path('sezioni/<int:pk>/modifica/', views.SezionePreventivoUpdateView.as_view(), name='sezione-update'),
+    path('sezioni/<int:pk>/attiva/', views.sezione_toggle_attiva, name='sezione-toggle-attiva'),
+    path('sezioni/<int:pk>/conferma/', views.sezione_toggle_confermata, name='sezione-toggle-confermata'),
     path('sezioni/<int:pk>/elimina/', views.SezionePreventivoDeleteView.as_view(), name='sezione-delete'),
 
     path('sezioni/<int:sezione_pk>/voci/nuova/', views.VoceProventivoCreateView.as_view(), name='voce-create'),

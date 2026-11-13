@@ -100,3 +100,98 @@ class AllegatiTests(TestCase):
         r = self.client.get(reverse('preventivo-detail', args=[self.preventivo.pk]))
         self.assertContains(r, 'Fornitore X')
         self.assertContains(r, 'preview-dialog')
+
+
+class StatoTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user('t', password='x')
+        self.p = Preventivo.objects.create(numero='2_26', cliente_id=uuid.uuid4(), data=date.today())
+        self.url = reverse('preventivo-cambia-stato', args=[self.p.pk])
+        self.detail = reverse('preventivo-detail', args=[self.p.pk])
+
+    def test_richiede_login(self):
+        self.assertEqual(self.client.post(self.url, {'stato': 'accettato'}).status_code, 302)
+        self.p.refresh_from_db()
+        self.assertEqual(self.p.stato, 'bozza')
+
+    def test_cambia_stato_e_mostra_banner(self):
+        self.client.force_login(self.user)
+        self.assertNotContains(self.client.get(self.detail), 'PREVENTIVO CONFERMATO')
+        self.client.post(self.url, {'stato': 'accettato'})
+        self.p.refresh_from_db()
+        self.assertEqual(self.p.stato, 'accettato')
+        self.assertContains(self.client.get(self.detail), 'PREVENTIVO CONFERMATO')
+
+    def test_stato_non_valido_e_get_rifiutati(self):
+        self.client.force_login(self.user)
+        self.client.post(self.url, {'stato': 'boh'})
+        self.p.refresh_from_db()
+        self.assertEqual(self.p.stato, 'bozza')
+        self.assertEqual(self.client.get(self.url).status_code, 405)
+
+
+class SezioniConfermateTests(TestCase):
+    def setUp(self):
+        from decimal import Decimal
+        from .models import SezionePreventivo, VoceProventivo
+        self.user = get_user_model().objects.create_user('t', password='x')
+        self.p = Preventivo.objects.create(numero='3_26', cliente_id=uuid.uuid4(), data=date.today())
+        self.a = SezionePreventivo.objects.create(preventivo=self.p, titolo='A')
+        self.b = SezionePreventivo.objects.create(preventivo=self.p, titolo='B')
+        VoceProventivo.objects.create(sezione=self.a, descrizione='x', quantita=1, prezzo_unitario=Decimal('100'))
+        VoceProventivo.objects.create(sezione=self.b, descrizione='y', quantita=2, prezzo_unitario=Decimal('50'))
+
+    def test_totale_senza_conferme_e_complessivo(self):
+        self.assertEqual(self.p.totale, 200)
+        self.assertFalse(self.p.ha_sezioni_confermate)
+
+    def test_totale_solo_sezioni_confermate(self):
+        self.client.force_login(self.user)
+        self.client.post(reverse('sezione-toggle-confermata', args=[self.b.pk]))
+        p = Preventivo.objects.get(pk=self.p.pk)
+        self.assertEqual(p.totale, 100)
+        self.assertEqual(p.totale_complessivo, 200)
+        r = self.client.get(reverse('preventivo-detail', args=[p.pk]))
+        self.assertContains(r, 'Totale confermato')
+        self.client.post(reverse('sezione-toggle-confermata', args=[self.b.pk]))
+        self.assertEqual(Preventivo.objects.get(pk=self.p.pk).totale, 200)
+
+    def test_toggle_richiede_login_e_post(self):
+        url = reverse('sezione-toggle-confermata', args=[self.a.pk])
+        self.assertEqual(self.client.post(url).status_code, 302)
+        self.a.refresh_from_db()
+        self.assertFalse(self.a.confermata)
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.get(url).status_code, 405)
+
+    def test_excel_solo_sezioni_confermate(self):
+        import openpyxl
+        self.client.force_login(self.user)
+        self.client.post(reverse('sezione-toggle-confermata', args=[self.b.pk]))
+        r = self.client.get(reverse('preventivo-excel', args=[self.p.pk]))
+        rows = list(openpyxl.load_workbook(io.BytesIO(r.content)).active.values)
+        self.assertEqual([row[0] for row in rows[1:-1]], ['y'])
+        self.assertEqual(rows[-1][-1], 100)
+
+
+    def test_sezione_disattiva_esclusa_da_totali_excel_pdf(self):
+        import openpyxl
+        self.client.force_login(self.user)
+        self.client.post(reverse('sezione-toggle-attiva', args=[self.b.pk]))
+        p = Preventivo.objects.get(pk=self.p.pk)
+        self.assertEqual(p.totale, 100)
+        self.assertEqual(p.totale_complessivo, 100)
+        r = self.client.get(reverse('preventivo-excel', args=[p.pk]))
+        rows = list(openpyxl.load_workbook(io.BytesIO(r.content)).active.values)
+        self.assertEqual([row[0] for row in rows[1:-1]], ['x'])
+        pdf = self.client.get(reverse('preventivo-pdf', args=[p.pk]))
+        self.assertEqual(pdf.status_code, 200)
+        self.assertNotIn(b'Disattivata', pdf.content)
+
+    def test_sezione_confermata_ma_disattiva_non_conta(self):
+        self.client.force_login(self.user)
+        self.client.post(reverse('sezione-toggle-confermata', args=[self.b.pk]))
+        self.client.post(reverse('sezione-toggle-attiva', args=[self.b.pk]))
+        p = Preventivo.objects.get(pk=self.p.pk)
+        self.assertFalse(p.ha_sezioni_confermate)
+        self.assertEqual(p.totale, 100)
