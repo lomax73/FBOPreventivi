@@ -195,3 +195,35 @@ class SezioniConfermateTests(TestCase):
         p = Preventivo.objects.get(pk=self.p.pk)
         self.assertFalse(p.ha_sezioni_confermate)
         self.assertEqual(p.totale, 100)
+
+
+    def test_totale_confermato_concordato(self):
+        import openpyxl
+        from decimal import Decimal
+        self.client.force_login(self.user)
+        url = reverse('sezione-totale-confermato', args=[self.b.pk])
+        self.client.post(reverse('sezione-toggle-confermata', args=[self.b.pk]))
+        self.client.post(url, {'totale_confermato': '90,50'})
+        p = Preventivo.objects.get(pk=self.p.pk)
+        self.assertEqual(p.totale, Decimal('90.50'))        # accordo, non il calcolo (100)
+        self.assertEqual(p.totale_complessivo, 200)
+        r = self.client.get(reverse('preventivo-excel', args=[p.pk]))
+        rows = list(openpyxl.load_workbook(io.BytesIO(r.content)).active.values)
+        self.assertEqual(rows[-1][-1], Decimal('90.50'))
+        self.assertEqual(sum(row[-1] for row in rows[1:-1]), Decimal('90.50'))  # le righe sommano
+        # svuotando il campo si torna al calcolo
+        self.client.post(url, {'totale_confermato': ''})
+        self.assertEqual(Preventivo.objects.get(pk=self.p.pk).totale, 100)
+
+    def test_totale_confermato_ignorato_se_sezione_non_confermata_e_no_negativi(self):
+        from decimal import Decimal
+        self.client.force_login(self.user)
+        url = reverse('sezione-totale-confermato', args=[self.b.pk])
+        self.client.post(url, {'totale_confermato': '10'})
+        self.assertEqual(Preventivo.objects.get(pk=self.p.pk).totale, 200)  # non confermata: vale il calcolo
+        self.client.post(url, {'totale_confermato': '-5'})
+        self.b.refresh_from_db()
+        self.assertEqual(self.b.totale_confermato, Decimal('10'))
+        self.client.post(url, {'totale_confermato': 'abc'})
+        self.b.refresh_from_db()
+        self.assertEqual(self.b.totale_confermato, Decimal('10'))

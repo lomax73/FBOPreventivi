@@ -88,7 +88,7 @@ class Preventivo(models.Model):
 
     @property
     def totale(self):
-        return sum((sezione.totale for sezione in self.sezioni_conteggiate), Decimal('0'))
+        return sum((sezione.totale_conteggiato for sezione in self.sezioni_conteggiate), Decimal('0'))
 
 
 class CategoriaProdotto(models.Model):
@@ -140,6 +140,11 @@ class SezionePreventivo(models.Model):
         default=False,
         help_text="Sezione accettata dal cliente. Se almeno una è confermata, il totale del preventivo conta solo quelle.",
     )
+    totale_confermato = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        validators=[MinValueValidator(Decimal('0'))],
+        help_text="Importo concordato con il cliente per questa sezione, se diverso dal calcolo. Vale solo se la sezione è confermata.",
+    )
 
     class Meta:
         ordering = ['ordine', 'id']
@@ -149,7 +154,23 @@ class SezionePreventivo(models.Model):
 
     @property
     def totale(self):
+        """Somma calcolata delle voci."""
         return sum((voce.totale_riga for voce in self.voci.all()), Decimal('0'))
+
+    @property
+    def ha_totale_concordato(self):
+        return self.confermata and self.totale_confermato is not None
+
+    @property
+    def totale_conteggiato(self):
+        """Importo che entra nel totale del preventivo: l'importo concordato
+        con il cliente se la sezione è confermata e ne ha uno, altrimenti il calcolo."""
+        return self.totale_confermato if self.ha_totale_concordato else self.totale
+
+    @property
+    def rettifica(self):
+        """Differenza tra importo concordato e calcolo (0 se non c'è accordo)."""
+        return self.totale_conteggiato - self.totale
 
 
 class VoceProventivo(models.Model):

@@ -162,8 +162,19 @@
         </tbody>
     </table>
     <p style="text-align:right; margin:0.75rem 0 0; color:#64748b;">
-        Totale sezione: <strong style="color:var(--ink);">&euro; {{ sezione.totale|floatformat:2 }}</strong>
+        Totale sezione{% if sezione.ha_totale_concordato %} calcolato{% endif %}: <strong style="color:var(--ink);{% if sezione.ha_totale_concordato %} text-decoration:line-through; font-weight:500;{% endif %}">&euro; {{ sezione.totale|floatformat:2 }}</strong>
     </p>
+    {% if sezione.attiva and sezione.confermata %}
+    <form action="{% url 'sezione-totale-confermato' sezione.pk %}" method="post" style="margin:0.5rem 0 0; display:flex; justify-content:flex-end; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+        {% csrf_token %}
+        <label for="tc-{{ sezione.pk }}" style="margin:0; color:#16a34a;" title="Importo concordato con il cliente, se diverso dal calcolo">Totale confermato &euro;</label>
+        <input type="text" inputmode="decimal" id="tc-{{ sezione.pk }}" name="totale_confermato" value="{% if sezione.totale_confermato is not None %}{{ sezione.totale_confermato|stringformat:'.2f' }}{% endif %}" placeholder="{{ sezione.totale|stringformat:'.2f' }}" style="width:9rem; text-align:right;">
+        <button class="btn btn-secondary" type="submit">Salva</button>
+    </form>
+    <p style="text-align:right; margin:0.25rem 0 0; font-size:0.8rem; color:#94a3b8;">
+        {% if sezione.ha_totale_concordato %}Importo concordato col cliente: <strong style="color:#16a34a;">&euro; {{ sezione.totale_confermato|floatformat:2 }}</strong> &middot; svuota il campo per tornare al calcolo.{% else %}Lascia vuoto per usare il totale calcolato.{% endif %}
+    </p>
+    {% endif %}
     {% else %}
     <p style="color:#94a3b8; margin:0;">Nessuna voce ancora in questa sezione.</p>
     {% endif %}

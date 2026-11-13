@@ -21,7 +21,7 @@ from openpyxl.styles import Alignment, Font
 from weasyprint import HTML
 
 from . import portal_client
-from .forms import AllegatoPreventivoForm, CategoriaProdottoForm, PreventivoForm, ProdottoForm, SezionePreventivoForm, VoceProventivoForm
+from .forms import AllegatoPreventivoForm, CategoriaProdottoForm, PreventivoForm, SezioneTotaleConfermatoForm, ProdottoForm, SezionePreventivoForm, VoceProventivoForm
 from .models import AllegatoPreventivo, CategoriaProdotto, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
 
 
@@ -374,6 +374,19 @@ def sezione_toggle_attiva(request, pk):
 
 @login_required
 @require_POST
+def sezione_set_totale_confermato(request, pk):
+    sezione = get_object_or_404(SezionePreventivo, pk=pk)
+    form = SezioneTotaleConfermatoForm(request.POST, instance=sezione)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Totale confermato aggiornato.' if sezione.totale_confermato is not None else 'Totale confermato rimosso: vale il calcolo.')
+    else:
+        messages.error(request, 'Importo non valido: ' + ' '.join(form.errors['totale_confermato']))
+    return redirect(reverse('preventivo-detail', args=[sezione.preventivo_id]) + f'#sezione-{sezione.pk}')
+
+
+@login_required
+@require_POST
 def sezione_toggle_confermata(request, pk):
     sezione = get_object_or_404(SezionePreventivo, pk=pk)
     sezione.confermata = not sezione.confermata
@@ -512,6 +525,7 @@ def preventivo_excel(request, pk):
     )
     sezioni = preventivo.sezioni_conteggiate
     voci = [voce for sezione in sezioni for voce in sezione.voci.all()]
+    rettifiche = [sezione for sezione in sezioni if sezione.rettifica]
     con_sconto = any(voce.prezzo_scontato is not None for voce in voci)
 
     wb = Workbook()
@@ -537,6 +551,12 @@ def preventivo_excel(request, pk):
         for cell in ws[ws.max_row][1:]:
             cell.number_format = eur
         ws.cell(row=ws.max_row, column=2).number_format = '#,##0.##'
+
+    # Accordi col cliente: una riga per sezione, così le righe sommano al totale.
+    for sezione in rettifiche:
+        ws.append([f'Accordo con il cliente – {sezione.titolo}'] + [''] * (len(intestazioni) - 2) + [sezione.rettifica])
+        ws.cell(row=ws.max_row, column=len(intestazioni)).number_format = eur
+        ws.cell(row=ws.max_row, column=1).font = Font(italic=True)
 
     totale = [''] * (len(intestazioni) - 2) + ['TOTALE', preventivo.totale]
     ws.append(totale)

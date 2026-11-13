@@ -20,6 +20,7 @@ urlpatterns = [
     path('preventivi/<int:preventivo_pk>/sezioni/nuova/', views.SezionePreventivoCreateView.as_view(), name='sezione-create'),
     path('sezioni/<int:pk>/modifica/', views.SezionePreventivoUpdateView.as_view(), name='sezione-update'),
     path('sezioni/<int:pk>/attiva/', views.sezione_toggle_attiva, name='sezione-toggle-attiva'),
+    path('sezioni/<int:pk>/totale-confermato/', views.sezione_set_totale_confermato, name='sezione-totale-confermato'),
     path('sezioni/<int:pk>/conferma/', views.sezione_toggle_confermata, name='sezione-toggle-confermata'),
     path('sezioni/<int:pk>/elimina/', views.SezionePreventivoDeleteView.as_view(), name='sezione-delete'),
 

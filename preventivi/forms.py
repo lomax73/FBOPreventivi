@@ -105,3 +105,16 @@ class AllegatoPreventivoForm(forms.ModelForm):
                 raise forms.ValidationError('Il file non è un\'immagine valida.')
         f.seek(0)
         return f
+
+
+class SezioneTotaleConfermatoForm(forms.ModelForm):
+    class Meta:
+        model = SezionePreventivo
+        fields = ['totale_confermato']
+
+    def __init__(self, data=None, *args, **kwargs):
+        if data is not None:
+            data = data.copy()
+            valore = (data.get('totale_confermato') or '').strip().replace(',', '.')
+            data['totale_confermato'] = valore
+        super().__init__(data, *args, **kwargs)
