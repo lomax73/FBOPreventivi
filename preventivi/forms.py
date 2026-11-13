@@ -1,7 +1,10 @@
+from pathlib import Path
+
 from django import forms
+from PIL import Image, UnidentifiedImageError
 
 from . import portal_client
-from .models import CategoriaProdotto, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
+from .models import AllegatoPreventivo, CategoriaProdotto, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
 
 
 class ProdottoForm(forms.ModelForm):
@@ -75,3 +78,30 @@ class VoceProventivoForm(forms.ModelForm):
             'specifiche': forms.Textarea(attrs={'rows': 3}),
             'note': forms.Textarea(attrs={'rows': 2}),
         }
+
+
+class AllegatoPreventivoForm(forms.ModelForm):
+    class Meta:
+        model = AllegatoPreventivo
+        fields = ['tipo', 'titolo', 'note', 'file']
+        widgets = {'note': forms.Textarea(attrs={'rows': 2})}
+
+    def clean_file(self):
+        f = self.cleaned_data['file']
+        ext = Path(f.name).suffix.lower()
+        if ext not in AllegatoPreventivo.ESTENSIONI_CONSENTITE:
+            raise forms.ValidationError('Formato non consentito: usa PDF, JPG, PNG, GIF o WEBP.')
+        if f.size > AllegatoPreventivo.DIMENSIONE_MAX:
+            raise forms.ValidationError('File troppo grande (massimo 10 MB).')
+        # Controllo sul contenuto reale, non solo sull'estensione.
+        f.seek(0)
+        if ext == '.pdf':
+            if f.read(5) != b'%PDF-':
+                raise forms.ValidationError('Il file non è un PDF valido.')
+        else:
+            try:
+                Image.open(f).verify()
+            except (UnidentifiedImageError, OSError, SyntaxError):
+                raise forms.ValidationError('Il file non è un\'immagine valida.')
+        f.seek(0)
+        return f

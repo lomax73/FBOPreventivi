@@ -12,6 +12,10 @@ urlpatterns = [
     path('preventivi/<int:pk>/pdf/', views.preventivo_pdf, name='preventivo-pdf'),
     path('preventivi/<int:pk>/excel/', views.preventivo_excel, name='preventivo-excel'),
 
+    path('preventivi/<int:preventivo_pk>/allegati/nuovo/', views.AllegatoCreateView.as_view(), name='allegato-create'),
+    path('allegati/<int:pk>/file/', views.allegato_file, name='allegato-file'),
+    path('allegati/<int:pk>/elimina/', views.AllegatoDeleteView.as_view(), name='allegato-delete'),
+
     path('preventivi/<int:preventivo_pk>/sezioni/nuova/', views.SezionePreventivoCreateView.as_view(), name='sezione-create'),
     path('sezioni/<int:pk>/modifica/', views.SezionePreventivoUpdateView.as_view(), name='sezione-update'),
     path('sezioni/<int:pk>/elimina/', views.SezionePreventivoDeleteView.as_view(), name='sezione-delete'),

@@ -9,6 +9,7 @@ env/
 db.sqlite3
 staticfiles/
 media/
+private_media/
 *.log
 .idea/
 .vscode/

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Nuovo allegato — FBOPreventivi{% endblock %}
+
+{% block content %}
+<h1>Nuovo allegato</h1>
+<p style="color:#64748b;">Preventivo {{ preventivo.numero }} rev. {{ preventivo.revisione }} &middot; PDF o immagini (JPG, PNG, GIF, WEBP), max 10 MB</p>
+<div class="card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn" type="submit">Carica</button>
+        <a class="btn btn-secondary" href="{% url 'preventivo-detail' preventivo.pk %}#allegati">Annulla</a>
+    </form>
+</div>
+{% endblock %}

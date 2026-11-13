@@ -7,20 +7,21 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.base import ContentFile
 from django.db.models import F
-from django.http import HttpResponse
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.text import slugify
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
 from weasyprint import HTML
 
 from . import portal_client
-from .forms import CategoriaProdottoForm, PreventivoForm, ProdottoForm, SezionePreventivoForm, VoceProventivoForm
-from .models import CategoriaProdotto, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
+from .forms import AllegatoPreventivoForm, CategoriaProdottoForm, PreventivoForm, ProdottoForm, SezionePreventivoForm, VoceProventivoForm
+from .models import AllegatoPreventivo, CategoriaProdotto, Preventivo, Prodotto, SezionePreventivo, VoceProventivo
 
 
 @dataclass
@@ -211,6 +212,8 @@ class PreventivoDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['sezioni'] = self.object.sezioni.prefetch_related('voci')
+        context['allegati'] = self.object.allegati.all()
+        context['allegato_form'] = AllegatoPreventivoForm()
         context['prodotti_catalogo'] = Prodotto.objects.all()
         _attach_clienti([self.object])
         return context
@@ -520,4 +523,60 @@ def preventivo_excel(request, pk):
     )
     filename = f'preventivo-{slugify(preventivo.numero)}-rev{slugify(preventivo.revisione)}.xlsx'
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+class AllegatoCreateView(LoginRequiredMixin, CreateView):
+    model = AllegatoPreventivo
+    form_class = AllegatoPreventivoForm
+    template_name = 'preventivi/allegato_form.html'
+
+    def get_preventivo(self):
+        return get_object_or_404(Preventivo, pk=self.kwargs['preventivo_pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['preventivo'] = self.get_preventivo()
+        return context
+
+    def form_valid(self, form):
+        form.instance.preventivo = self.get_preventivo()
+        form.instance.caricato_da = self.request.user
+        form.instance.nome_originale = Path(form.cleaned_data['file'].name).name[:255]
+        messages.success(self.request, 'Allegato caricato.')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('preventivo-detail', args=[self.object.preventivo_id]) + '#allegati'
+
+
+class AllegatoDeleteView(LoginRequiredMixin, DeleteView):
+    model = AllegatoPreventivo
+    template_name = 'preventivi/allegato_confirm_delete.html'
+
+    def get_success_url(self):
+        return reverse('preventivo-detail', args=[self.object.preventivo_id]) + '#allegati'
+
+
+_CONTENT_TYPES = {
+    '.pdf': 'application/pdf',
+    '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+    '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp',
+}
+
+
+@login_required
+@xframe_options_sameorigin  # serve per l'anteprima PDF in iframe nella stessa pagina
+def allegato_file(request, pk):
+    allegato = get_object_or_404(AllegatoPreventivo, pk=pk)
+    try:
+        handle = allegato.file.open('rb')
+    except FileNotFoundError:
+        raise Http404('File non trovato')
+    response = FileResponse(handle, content_type=_CONTENT_TYPES.get(allegato.estensione, 'application/octet-stream'))
+    disposizione = 'attachment' if request.GET.get('download') else 'inline'
+    nome = allegato.nome_originale or f'allegato-{allegato.pk}{allegato.estensione}'
+    response['Content-Disposition'] = f'{disposizione}; filename="{slugify(Path(nome).stem)}{allegato.estensione}"'
+    response['X-Content-Type-Options'] = 'nosniff'
+    response['Cache-Control'] = 'private, no-store'
     return response

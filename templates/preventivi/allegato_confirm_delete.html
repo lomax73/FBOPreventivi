@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Elimina allegato — FBOPreventivi{% endblock %}
+
+{% block content %}
+<h1>Elimina allegato</h1>
+<div class="card">
+    <p>Eliminare definitivamente l'allegato <strong>{{ object.etichetta }}</strong>? Il file verrà cancellato dal server.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button class="btn" type="submit" style="background:#ef4444;">Elimina</button>
+        <a class="btn btn-secondary" href="{% url 'preventivo-detail' object.preventivo_id %}#allegati">Annulla</a>
+    </form>
+</div>
+{% endblock %}

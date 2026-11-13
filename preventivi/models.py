@@ -1,9 +1,13 @@
+import uuid
 from decimal import Decimal
 from pathlib import Path
 
 from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.urls import reverse
 
 CONDIZIONI_FORNITURA_DEFAULT = (
@@ -176,3 +180,67 @@ class VoceProventivo(models.Model):
         if self.escluso_da_totale:
             return Decimal('0')
         return self.prezzo_effettivo * self.quantita
+
+
+def allegati_storage():
+    # Callable: così la migrazione non incorpora il percorso della macchina.
+    return FileSystemStorage(location=settings.ALLEGATI_ROOT)
+
+
+def allegato_upload_to(instance, filename):
+    # Nome casuale su disco: niente collisioni né caratteri strani.
+    # Il nome originale resta nel campo nome_originale.
+    return f"{uuid.uuid4().hex}{Path(filename).suffix.lower()}"
+
+
+class AllegatoPreventivo(models.Model):
+    class Tipo(models.TextChoices):
+        FORNITORE = 'fornitore', 'Preventivo fornitore'
+        APPUNTI = 'appunti', 'Appunti'
+
+    ESTENSIONI_IMMAGINE = ('.jpg', '.jpeg', '.png', '.gif', '.webp')
+    ESTENSIONI_CONSENTITE = ('.pdf',) + ESTENSIONI_IMMAGINE
+    DIMENSIONE_MAX = 10 * 1024 * 1024  # in linea con client_max_body_size di nginx
+
+    preventivo = models.ForeignKey(Preventivo, on_delete=models.CASCADE, related_name='allegati')
+    tipo = models.CharField(max_length=20, choices=Tipo.choices, default=Tipo.FORNITORE)
+    titolo = models.CharField(
+        max_length=200, blank=True,
+        help_text="Es. nome del fornitore o argomento dell'appunto. Se vuoto si usa il nome del file.",
+    )
+    note = models.TextField(blank=True)
+    file = models.FileField(upload_to=allegato_upload_to, storage=allegati_storage)
+    nome_originale = models.CharField(max_length=255, blank=True)
+    caricato_da = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='allegati_caricati',
+    )
+    caricato_il = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['tipo', '-caricato_il']
+
+    def __str__(self):
+        return self.titolo or self.nome_originale
+
+    @property
+    def estensione(self):
+        return Path(self.file.name).suffix.lower()
+
+    @property
+    def is_pdf(self):
+        return self.estensione == '.pdf'
+
+    @property
+    def is_immagine(self):
+        return self.estensione in self.ESTENSIONI_IMMAGINE
+
+    @property
+    def etichetta(self):
+        return self.titolo or self.nome_originale
+
+
+@receiver(post_delete, sender=AllegatoPreventivo)
+def elimina_file_allegato(sender, instance, **kwargs):
+    if instance.file:
+        instance.file.delete(save=False)

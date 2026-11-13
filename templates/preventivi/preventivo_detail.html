@@ -133,4 +133,89 @@
     <strong>Totale: &euro; {{ preventivo.totale|floatformat:2 }}</strong>
 </div>
 {% endif %}
+
+<div class="card" id="allegati">
+    <h2>Allegati</h2>
+    <p style="color:#64748b; margin:0 0 1rem; font-size:0.9rem;">Preventivi dei fornitori e appunti a supporto di questo preventivo. PDF o immagini, max 10 MB.</p>
+
+    {% if allegati %}
+    <table>
+        <thead><tr><th></th><th>Titolo</th><th>Tipo</th><th>Caricato</th><th></th></tr></thead>
+        <tbody>
+            {% for allegato in allegati %}
+            <tr>
+                <td style="width:60px;">
+                    {% if allegato.is_immagine %}
+                    <img src="{% url 'allegato-file' allegato.pk %}" alt="" loading="lazy" style="max-width:50px; max-height:50px; border-radius:6px; cursor:pointer;" data-preview data-url="{% url 'allegato-file' allegato.pk %}" data-kind="image" data-title="{{ allegato.etichetta }}">
+                    {% else %}
+                    <span style="font-size:0.75rem; font-weight:600; color:#b91c1c; border:1px solid #fecaca; background:#fef2f2; border-radius:4px; padding:0.1rem 0.35rem;">PDF</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <strong>{{ allegato.etichetta }}</strong>
+                    {% if allegato.note %}<br><span style="color:#64748b; font-size:0.85rem;">{{ allegato.note|linebreaksbr }}</span>{% endif %}
+                </td>
+                <td>{{ allegato.get_tipo_display }}</td>
+                <td style="font-size:0.85rem; color:#64748b;">{{ allegato.caricato_il|date:"d/m/Y H:i" }}{% if allegato.caricato_da %}<br>{{ allegato.caricato_da }}{% endif %}</td>
+                <td style="white-space:nowrap;">
+                    <a href="{% url 'allegato-file' allegato.pk %}" data-preview data-url="{% url 'allegato-file' allegato.pk %}" data-kind="{% if allegato.is_pdf %}pdf{% else %}image{% endif %}" data-title="{{ allegato.etichetta }}">Anteprima</a> &middot;
+                    <a href="{% url 'allegato-file' allegato.pk %}?download=1">Scarica</a> &middot;
+                    <a href="{% url 'allegato-delete' allegato.pk %}" style="color:#ef4444;">Elimina</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:#94a3b8; margin:0 0 1rem;">Nessun allegato ancora.</p>
+    {% endif %}
+
+    <form method="post" action="{% url 'allegato-create' preventivo.pk %}" enctype="multipart/form-data" style="margin-top:1rem; display:flex; gap:0.6rem; flex-wrap:wrap; align-items:flex-end;">
+        {% csrf_token %}
+        <div>{{ allegato_form.tipo.label_tag }}<br>{{ allegato_form.tipo }}</div>
+        <div>{{ allegato_form.titolo.label_tag }}<br>{{ allegato_form.titolo }}</div>
+        <div>{{ allegato_form.file.label_tag }}<br><input type="file" name="file" id="id_file" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,application/pdf,image/*" required></div>
+        <button class="btn" type="submit">+ Allega</button>
+    </form>
+</div>
+
+<dialog id="preview-dialog" style="width:min(1000px, 94vw); height:90vh; padding:0; border:none; border-radius:10px; overflow:hidden;">
+    <div style="display:flex; flex-direction:column; height:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 1rem; background:var(--navy); color:#fff;">
+            <strong id="preview-title" style="font-family:var(--font-display);"></strong>
+            <button type="button" id="preview-close" class="btn btn-secondary" style="padding:0.25rem 0.8rem;">Chiudi</button>
+        </div>
+        <div id="preview-body" style="flex:1; min-height:0; background:#e2e8f0; display:flex; align-items:center; justify-content:center;"></div>
+    </div>
+</dialog>
+<script>
+(function () {
+    var dialog = document.getElementById('preview-dialog');
+    var body = document.getElementById('preview-body');
+    var title = document.getElementById('preview-title');
+    function close() { dialog.close(); body.innerHTML = ''; }
+    document.querySelectorAll('[data-preview]').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+            e.preventDefault();
+            body.innerHTML = '';
+            var node;
+            if (el.dataset.kind === 'pdf') {
+                node = document.createElement('iframe');
+                node.style.cssText = 'width:100%; height:100%; border:0; background:#fff;';
+            } else {
+                node = document.createElement('img');
+                node.style.cssText = 'max-width:100%; max-height:100%; object-fit:contain;';
+                node.alt = '';
+            }
+            node.src = el.dataset.url;
+            body.appendChild(node);
+            title.textContent = el.dataset.title;
+            dialog.showModal();
+        });
+    });
+    document.getElementById('preview-close').addEventListener('click', close);
+    dialog.addEventListener('click', function (e) { if (e.target === dialog) close(); });
+    dialog.addEventListener('close', function () { body.innerHTML = ''; });
+})();
+</script>
 {% endblock %}

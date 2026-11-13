@@ -150,3 +150,8 @@ MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Allegati ai preventivi (preventivi dei fornitori, appunti): contengono costi
+# e dati commerciali, quindi stanno FUORI da MEDIA_ROOT (che nginx serve
+# pubblicamente) e vengono serviti solo da una vista protetta da login.
+ALLEGATI_ROOT = BASE_DIR / 'private_media' / 'allegati'
